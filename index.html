@@ -855,27 +855,46 @@
         }
 
         function enterMess(e) {
-            let sel = document.getElementById('messDropdown');
-            if(!sel.value) return showToast("দয়া করে মেস নির্বাচন করুন!", true);
-            
-            let btn = e ? e.currentTarget : null;
-            if(btn) { btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> লোড হচ্ছে...'; btn.disabled = true; }
+    let sel = document.getElementById('messDropdown');
+    if(!sel.value) return showToast("দয়া করে মেস নির্বাচন করুন!", true);
+    
+    let btn = e ? e.currentTarget : null;
+    if(btn) { btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> লোড হচ্ছে...'; btn.disabled = true; }
 
-            currentMessId = sel.value; 
-            currentMessName = sel.options[sel.selectedIndex].text;
-            localStorage.setItem('mess_id', currentMessId); 
-            localStorage.setItem('mess_name', currentMessName);
-            if(window.OneSignal) OneSignal.push(["sendTag", "mess_id", currentMessId]);
-            
-            // [FIX-1] messSelectionScreen এবং splashScreen উভয়ই hide করতে হবে
-            document.getElementById('messSelectionScreen').classList.remove('flex'); 
-            document.getElementById('messSelectionScreen').classList.add('hidden');
-            // splashScreen hide করা (z-index conflict এড়াতে)
-            let sp = document.getElementById('splashScreen');
-            if(sp) { sp.style.opacity = '0'; setTimeout(() => sp.classList.add('hidden'), 300); }
-            
-            setTimeout(() => { loadMainApp(); }, 200);
+    currentMessId = sel.value; 
+    currentMessName = sel.options[sel.selectedIndex].text;
+    
+    // লোকাল স্টোরেজে ডেটা সেভ করা
+    localStorage.setItem('mess_id', currentMessId); 
+    localStorage.setItem('mess_name', currentMessName);
+    
+    // OneSignal এরর হ্যান্ডলিং (যাতে কোড ব্রেক না করে)
+    try {
+        if(window.OneSignal) {
+            // OneSignal v16+ এর জন্য
+            if (OneSignal.User && typeof OneSignal.User.addTag === 'function') {
+                OneSignal.User.addTag("mess_id", currentMessId); 
+            } 
+            // পুরনো ভার্সনের জন্য ফলব্যাক
+            else if (typeof OneSignal.push === 'function') {
+                OneSignal.push(["sendTag", "mess_id", currentMessId]); 
+            }
         }
+    } catch (error) {
+        console.warn("OneSignal Error:", error); // এরর হলে শুধু কনসোলে দেখাবে, কোড থামবে না
+    }
+    
+    // [FIX-1] messSelectionScreen এবং splashScreen উভয়ই hide করতে হবে
+    document.getElementById('messSelectionScreen').classList.remove('flex'); 
+    document.getElementById('messSelectionScreen').classList.add('hidden');
+    
+    // splashScreen hide করা (z-index conflict এড়াতে)
+    let sp = document.getElementById('splashScreen');
+    if(sp) { sp.style.opacity = '0'; setTimeout(() => sp.classList.add('hidden'), 300); }
+    
+    // মেইন অ্যাপ লোড করা এবং ডেটা ফেচ করা
+    setTimeout(() => { loadMainApp(); }, 200);
+}
 
         function logoutMess() { 
             localStorage.clear(); 
