@@ -1,0 +1,1956 @@
+<!DOCTYPE html>
+<html lang="bn" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ideal Home | Central SaaS Management</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Hind Siliguri"', 'sans-serif'] },
+                    colors: { primary: '#4f46e5', secondary: '#14b8a6', darkBg: '#0f172a', darkCard: '#1e293b' },
+                    animation: { 
+                        'fade-in': 'fadeIn 0.3s ease-in-out', 
+                        'slide-up': 'slideUp 0.4s ease-out forwards', 
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite' 
+                    },
+                    keyframes: { 
+                        slideUp: { '0%': { opacity: 0, transform: 'translateY(15px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } }, 
+                        fadeIn: { '0%': { opacity: 0 }, '100%': { opacity: 1 } } 
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal) { 
+          await OneSignal.init({ appId: "1094d89b-d41a-4282-bbc5-469603e76f9c" }); 
+      });
+    </script>
+
+    <style>
+        body { font-family: 'Hind Siliguri', sans-serif !important; -webkit-tap-highlight-color: transparent; }
+        .glass { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.5); }
+        .dark .glass { background: rgba(30, 41, 59, 0.85); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .hide-scrollbar::-webkit-scrollbar { display: none; } 
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .nav-active { color: #4f46e5 !important; transform: translateY(-4px); font-weight: bold; opacity: 1 !important; }
+        .dark .nav-active { color: #818cf8 !important; }
+        .tab-content { display: none; } 
+        .tab-content.active { display: block; }
+        
+        @media print {
+            @page { size: A4 portrait; margin: 10mm; }
+            body { background: white !important; margin: 0; padding: 0; }
+            .print-hidden { display: none !important; }
+            body > *:not(#reportM) { display: none !important; }
+            #reportM { position: static !important; background: white !important; display: block !important; height: auto !important; overflow: visible !important; }
+            #printArea { box-shadow: none !important; margin: 0 auto !important; width: 100% !important; max-width: 100% !important; border-radius: 0 !important; }
+            table { font-size: 11px !important; width: 100% !important; }
+            th, td { padding: 4px !important; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 dark:bg-darkBg dark:text-gray-100 pb-28 transition-colors duration-300">
+
+    <div id="splashScreen" class="fixed inset-0 bg-primary z-[9999] flex flex-col items-center justify-center text-white transition-opacity duration-500">
+        <i class="fas fa-home text-7xl mb-4 animate-bounce"></i>
+        <h1 class="text-3xl font-bold text-center">আইডিয়াল হোম<br><span class="text-lg">Central System</span></h1>
+        <div class="mt-10 flex gap-2" id="splashLoader">
+            <div class="w-3 h-3 bg-white rounded-full animate-pulse"></div>
+            <div class="w-3 h-3 bg-white rounded-full animate-pulse delay-75"></div>
+            <div class="w-3 h-3 bg-white rounded-full animate-pulse delay-150"></div>
+        </div>
+    </div>
+
+    <div id="customToast" class="fixed top-14 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-full shadow-2xl z-[10000] text-xs font-bold text-white transition-opacity duration-300 opacity-0 pointer-events-none" style="display: none;"></div>
+    
+    <div id="confirmModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[9000]">
+        <div class="bg-white dark:bg-darkCard p-6 rounded-3xl w-full max-w-xs shadow-2xl text-center">
+            <div class="inline-block p-4 bg-orange-100 dark:bg-orange-900/30 rounded-full mb-4"><i class="fas fa-question-circle text-4xl text-orange-500"></i></div>
+            <h3 id="confirmMsg" class="font-bold text-sm mb-5 text-gray-800 dark:text-white leading-relaxed"></h3>
+            <div class="flex gap-3">
+                <button onclick="closeConfirm(false)" class="flex-1 bg-gray-200 dark:bg-gray-700 py-3 rounded-xl font-bold text-gray-700 dark:text-gray-300">না</button>
+                <button onclick="closeConfirm(true)" class="flex-1 bg-primary text-white py-3 rounded-xl font-bold shadow-md">হ্যাঁ</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="messSelectionScreen" class="fixed inset-0 bg-indigo-600 z-[900] hidden flex-col items-center justify-center p-6 text-white transition-opacity duration-500">
+        <button onclick="openM('saLoginModal')" class="absolute top-6 right-6 bg-white/20 p-3 rounded-full shadow hover:bg-white/30 transition"><i class="fas fa-user-shield text-xl"></i></button>
+        <i class="fas fa-city text-6xl mb-4 animate-bounce"></i>
+        <h1 class="text-3xl font-bold text-center">আইডিয়াল হোম<br><span class="text-lg font-normal opacity-80">সেন্ট্রাল মেস সিস্টেম</span></h1>
+        
+        <div id="loadingMesses" class="mt-8 flex gap-2">
+            <div class="w-3 h-3 bg-white rounded-full animate-pulse"></div>
+            <div class="w-3 h-3 bg-white rounded-full animate-pulse delay-75"></div>
+        </div>
+        
+        <div id="selectMessBox" class="w-full max-w-sm mt-8 space-y-4 hidden">
+            <select id="messDropdown" class="w-full p-4 rounded-2xl bg-white text-gray-900 outline-none appearance-none border border-gray-300 text-center font-bold shadow-lg">
+                <option value="" class="text-gray-900 font-bold" disabled selected>আপনার মেস সিলেক্ট করুন</option>
+            </select>
+            <button onclick="enterMess(event)" class="w-full bg-indigo-100 text-indigo-700 py-4 rounded-2xl font-bold shadow-xl active:scale-95 transition flex items-center justify-center">মেসে প্রবেশ করুন</button>
+            <div class="relative flex py-5 items-center">
+                <div class="flex-grow border-t border-white/30"></div>
+                <span class="flex-shrink-0 mx-4 text-white/50 text-xs">অথবা</span>
+                <div class="flex-grow border-t border-white/30"></div>
+            </div>
+            <button onclick="openM('registerMessModal')" class="w-full border-2 border-white/50 text-white py-3 rounded-2xl font-bold active:scale-95 transition">নতুন মেস যুক্ত করুন</button>
+        </div>
+    </div>
+
+    <div id="superAdminScreen" class="fixed inset-0 bg-gray-100 dark:bg-slate-900 z-[950] hidden flex-col overflow-y-auto">
+        <nav class="bg-indigo-600 text-white p-4 flex justify-between items-center shadow-lg sticky top-0 z-10">
+            <div><h1 class="font-bold text-lg"><i class="fas fa-shield-alt mr-2"></i>Super Admin</h1></div>
+            <button onclick="logoutSA()" class="bg-red-500 hover:bg-red-600 px-4 py-1.5 rounded-full text-xs font-bold shadow">লগআউট</button>
+        </nav>
+        <div class="p-4 max-w-lg mx-auto w-full">
+            <div class="flex bg-gray-200 dark:bg-slate-800 rounded-xl p-1 mb-5 shadow-inner">
+                <button onclick="saSwitchTab('pending')" id="saBtn_pending" class="flex-1 py-2 bg-white dark:bg-slate-700 rounded-lg font-bold shadow-sm text-primary transition">Pending</button>
+                <button onclick="saSwitchTab('approved')" id="saBtn_approved" class="flex-1 py-2 font-bold text-gray-500 dark:text-gray-400 transition">Approved</button>
+            </div>
+            
+            <div id="sa_pending_tab" class="space-y-3">
+                <div id="pendingList"><p class="text-center text-sm opacity-60 my-5">লোড হচ্ছে...</p></div>
+            </div>
+            
+            <div id="sa_approved_tab" class="hidden space-y-3">
+                <div id="approvedList"><p class="text-center text-sm opacity-60 my-5">লোড হচ্ছে...</p></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="mainAppWrapper" class="hidden">
+        
+        <nav class="glass sticky top-0 z-40 shadow-sm px-4 py-3 flex justify-between items-center">
+            <div>
+                <h1 class="text-xl font-bold text-primary dark:text-indigo-400" id="activeMessName">Loading...</h1>
+                <p class="text-[10px] tracking-widest uppercase opacity-70" id="monthName">Loading...</p>
+            </div>
+            <div class="flex gap-2 items-center">
+                <span id="offlineBadge" class="hidden bg-red-100 text-red-600 text-[9px] px-2 py-1 rounded-full font-bold animate-pulse"><i class="fas fa-wifi-slash"></i></span>
+                <button onclick="toggleDarkMode()" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition"><i id="themeIcon" class="fas fa-moon text-gray-600 dark:text-yellow-300"></i></button>
+                <button onclick="fetchFreshData()" class="p-2 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 shadow-sm"><i class="fas fa-sync-alt" id="refreshIcon"></i></button>
+                <button id="topAuthBtn" onclick="openTopLoginMenu()" class="bg-primary text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-sm flex items-center gap-1"><i class="fas fa-sign-in-alt"></i> লগইন</button>
+            </div>
+        </nav>
+
+        <div id="mainApp" class="container mx-auto p-4 max-w-lg pb-28">
+            
+            <div id="tab_home" class="tab-content active space-y-5">
+                <div class="mb-5 animate-slide-up flex justify-between items-end glass p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800 dark:text-white"><span id="greeting">হ্যালো</span> 👋</h2>
+                        <p class="text-xs opacity-70">আজকের মেস সামারি</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[9px] uppercase font-bold text-yellow-500">ম্যানেজার</p>
+                        <p id="mgrName" class="text-sm font-bold text-primary dark:text-indigo-400">...</p>
+                    </div>
+                </div>
+
+                <div id="noticeCard" class="hidden glass p-4 rounded-3xl shadow-sm mb-5 border-l-4 border-purple-500 animate-slide-up">
+                    <p class="text-[10px] uppercase font-bold opacity-70 mb-1"><i class="fas fa-bullhorn text-purple-500 mr-1"></i>নোটিশ</p>
+                    <p id="noticeText" class="text-sm text-gray-700 dark:text-gray-200 leading-relaxed"></p>
+                </div>
+
+                <!-- সকালের মিল থাকলে ৩ কলাম, না থাকলে ২ কলাম -->
+                <div id="mealSummaryGrid" class="grid grid-cols-2 gap-3 mb-5 animate-slide-up">
+                    <div id="breakfastBox" class="hidden bg-gradient-to-br from-orange-400 to-orange-500 text-white p-4 rounded-3xl shadow-lg relative overflow-hidden">
+                        <i class="fas fa-coffee absolute -right-2 -top-2 text-6xl opacity-20"></i>
+                        <p class="text-[10px] font-bold uppercase opacity-90">আজকের সকাল</p>
+                        <h2 id="todayBreakfast" class="text-4xl font-bold mt-1">০</h2>
+                    </div>
+                    <div class="bg-gradient-to-br from-teal-400 to-teal-600 text-white p-4 rounded-3xl shadow-lg relative overflow-hidden">
+                        <i class="fas fa-sun absolute -right-2 -top-2 text-6xl opacity-20"></i>
+                        <p class="text-[10px] font-bold uppercase opacity-90">আজকের লাঞ্চ</p>
+                        <h2 id="todayLunch" class="text-4xl font-bold mt-1">০</h2>
+                    </div>
+                    <div class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white p-4 rounded-3xl shadow-lg relative overflow-hidden">
+                        <i class="fas fa-moon absolute -right-2 -top-2 text-6xl opacity-20"></i>
+                        <p class="text-[10px] font-bold uppercase opacity-90">আজকের ডিনার</p>
+                        <h2 id="todayDinner" class="text-4xl font-bold mt-1">০</h2>
+                    </div>
+                </div>
+
+                <div class="glass p-5 rounded-3xl shadow-sm mb-5 animate-slide-up border-t-4 border-primary">
+                    <h3 class="font-bold text-sm mb-4 text-primary border-b pb-2"><i class="fas fa-utensils mr-2"></i>ম্যানেজারের হিসাব (খাবারের হিসাব)</h3>
+                    <div class="flex justify-between items-end mb-4">
+                        <div>
+                            <p class="text-[10px] uppercase font-bold opacity-70">চলতি মাসের জমা</p>
+                            <h2 id="totalDep" class="text-xl font-bold text-green-600 dark:text-green-400">৳ ০</h2>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[10px] uppercase font-bold opacity-70">চলতি মাসের খরচ</p>
+                            <h2 id="totalExp" class="text-xl font-bold text-red-600 dark:text-red-400">৳ ০</h2>
+                        </div>
+                    </div>
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 h-2.5 rounded-full overflow-hidden">
+                        <div id="budgetBar" class="h-full bg-primary transition-all duration-1000" style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-between text-[10px] font-bold opacity-60 mt-1">
+                        <span id="budgetPercent">০% ব্যবহৃত</span>
+                        <span>ফান্ড ব্যালেন্স: <span id="bal" class="text-primary dark:text-indigo-400 font-bold">৳ ০</span></span>
+                    </div>
+                    <hr class="my-3 dark:border-gray-700">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-[10px] uppercase font-bold opacity-70">মোট মিল</p>
+                            <h2 id="totalM" class="text-lg font-bold text-blue-600 dark:text-blue-400">০ টি</h2>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[10px] uppercase font-bold opacity-70">মিল রেট</p>
+                            <h2 id="mRate" class="text-lg font-bold text-orange-500">৳ ০</h2>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Director summary moved to Director tab -->
+
+                <!-- [FIX-3] আজকের বাজারকারীর card -->
+                <div id="bazaarPersonCard" class="hidden glass p-4 rounded-3xl shadow-sm mb-1 border-l-4 border-yellow-500 animate-slide-up bg-yellow-50/30 dark:bg-yellow-900/10">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center text-white text-lg">
+                                <i class="fas fa-shopping-basket"></i>
+                            </div>
+                            <div>
+                                <p class="text-[10px] uppercase font-bold text-yellow-600 dark:text-yellow-400 opacity-80">আজকের বাজারকারী</p>
+                                <h3 id="bazaarPersonName" class="font-bold text-sm text-gray-800 dark:text-white">...</h3>
+                                <p id="bazaarPersonDate" class="text-[10px] text-gray-500"></p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[10px] font-bold text-gray-400 uppercase">আজকের বাজার</p>
+                            <h3 id="todayBazaarTotal" class="text-lg font-bold text-orange-500">৳ ০</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="getAIAdvice()" class="w-full bg-gradient-to-r from-primary to-indigo-600 text-white p-4 rounded-3xl font-bold shadow-lg flex justify-center items-center gap-2 active:scale-95 transition animate-slide-up">
+                    <i class="fas fa-robot"></i> <span id="aiBtnText">ম্যাজিক এআই সাজেশন</span>
+                </button>
+                
+                <div id="aiBox" class="hidden glass p-5 rounded-2xl border-l-4 border-indigo-400 text-sm leading-relaxed animate-fade-in mt-4"></div>
+                
+                <p onclick="logoutMess()" class="text-center text-xs text-gray-400 mt-8 mb-4 cursor-pointer hover:underline"><i class="fas fa-exchange-alt mr-1"></i>মেস পরিবর্তন করুন (Change Mess)</p>
+            </div>
+
+            <div id="tab_trans" class="tab-content w-full space-y-4">
+                <div class="glass p-4 rounded-3xl shadow-sm mb-4">
+                    <canvas id="expenseChart" height="150"></canvas>
+                </div>
+                <div class="glass rounded-2xl shadow-sm overflow-hidden">
+                    <div class="flex bg-gray-100 dark:bg-gray-800 text-[10px] font-bold uppercase text-center border-b dark:border-gray-700">
+                        <button onclick="subTab('st1')" id="btn_st1" class="flex-1 py-3 text-primary border-b-2 border-primary transition font-bold">খরচ তালিকা</button>
+                        <button onclick="subTab('st2')" id="btn_st2" class="flex-1 py-3 text-gray-500 dark:text-gray-400 transition">জমার হিসাব</button>
+                    </div>
+                    <div id="st1" class="p-2 overflow-y-auto max-h-[70vh] pb-24 hide-scrollbar">
+                        <table class="w-full text-left text-sm">
+                            <tbody id="expBody" class="divide-y divide-gray-100 dark:divide-gray-700"></tbody>
+                        </table>
+                    </div>
+                    <div id="st2" class="hidden p-2 overflow-y-auto max-h-[70vh] pb-24 hide-scrollbar">
+                        <table class="w-full text-left text-sm">
+                            <tbody id="depBody" class="divide-y divide-gray-100 dark:divide-gray-700"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab_boarders" class="tab-content w-full space-y-4">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="font-bold text-sm opacity-80"><i class="fas fa-users mr-2 text-indigo-500"></i>সকল বর্ডার</h3>
+                    <input type="text" id="searchB" onkeyup="searchBoarderList()" placeholder="বর্ডার খুঁজুন..." class="w-1/2 p-2 rounded-xl bg-white dark:bg-slate-800 text-xs outline-none border dark:border-slate-700 focus:ring-1 focus:ring-primary">
+                </div>
+                <div id="boarderList" class="space-y-4 pb-28"></div>
+            </div>
+
+            <div id="tab_archive" class="tab-content w-full space-y-4">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="font-bold text-sm opacity-80"><i class="fas fa-box-archive mr-2 text-indigo-500"></i>মাসিক আর্কাইভ</h3>
+                </div>
+                <div class="glass p-5 rounded-3xl shadow-sm mb-5 border-l-4 border-indigo-500">
+                    <p class="text-[10px] text-gray-500 dark:text-gray-400 mb-4">পূর্ববর্তী মাসের সকল খরচের পিডিএফ রিপোর্ট এখানে সংরক্ষিত আছে।</p>
+                    <div id="archiveList" class="space-y-3">
+                        <p class="text-xs text-center text-gray-400">কোনো আর্কাইভ পাওয়া যায়নি</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab_manager" class="tab-content w-full space-y-5">
+                <div id="mgrLockScreen" class="glass p-10 rounded-3xl text-center border-2 border-yellow-400/30 mt-5">
+                    <div class="inline-block p-4 bg-yellow-100 dark:bg-yellow-900/30 rounded-full mb-4">
+                        <i class="fas fa-shield-alt text-4xl text-yellow-600 dark:text-yellow-400"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">ম্যানেজার প্যানেল লক</h3>
+                    <button onclick="showRoleLogin('manager')" class="bg-primary text-white px-8 py-3 rounded-2xl font-bold shadow-md active:scale-95 transition mt-4">আনলক করুন</button>
+                </div>
+
+                <div id="mgrContent" class="hidden space-y-4 animate-fade-in">
+                    <div class="flex justify-between items-center glass p-4 rounded-2xl border-l-4 border-primary">
+                        <h3 class="font-bold text-primary"><i class="fas fa-user-shield mr-2"></i>ম্যানেজার কন্ট্রোল</h3>
+                        <button onclick="processLogout()" class="text-[10px] text-red-500 font-bold bg-red-50 dark:bg-red-900/30 px-3 py-1 rounded-full"><i class="fas fa-lock mr-1"></i>লক করুন</button>
+                    </div>
+
+                    <div class="glass rounded-2xl overflow-hidden border border-orange-200 dark:border-orange-900/40">
+                        <div class="bg-orange-50 dark:bg-orange-900/20 px-4 py-2 flex justify-between items-center">
+                            <p class="text-[11px] font-bold text-orange-600 dark:text-orange-400 uppercase"><i class="fas fa-clock mr-1"></i>অনুমোদনের অপেক্ষায়</p>
+                            <span id="pendingCount" class="bg-orange-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full">০</span>
+                        </div>
+                        <div id="pendingBazaarList" class="p-3 space-y-2 max-h-48 overflow-y-auto hide-scrollbar"></div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="generateReport()" class="col-span-2 bg-rose-500 text-white py-4 rounded-3xl font-bold shadow-md"><i class="fas fa-file-pdf mr-2"></i>চলতি মাসের পিডিএফ রিপোর্ট</button>
+                        <button onclick="showAction('ASSIGN_BAZAAR')" class="col-span-2 bg-yellow-500 text-white py-3 rounded-2xl font-bold shadow"><i class="fas fa-user-tag mr-2"></i>বাজারের দায়িত্ব দিন</button>
+                        <button onclick="showAction('UPDATE_NOTICE')" class="col-span-2 bg-purple-500 text-white py-3 rounded-2xl font-bold shadow"><i class="fas fa-bullhorn mr-2"></i>নোটিশ আপডেট করুন</button>
+                        <button onclick="showAction('MANAGER_EDIT_MEAL')" class="col-span-2 bg-indigo-500 text-white py-3 rounded-2xl font-bold shadow"><i class="fas fa-edit mr-2"></i>বর্ডারের মিল স্ট্যাটাস এডিট</button>
+                        <button onclick="showDailyMeal()" class="col-span-2 bg-teal-600 text-white p-3 rounded-2xl font-bold shadow">ম্যানুয়াল মিল এন্ট্রি</button>
+                        <button onclick="showAction('ADD_DEPOSIT')" class="bg-blue-600 text-white p-3 rounded-xl text-xs font-bold shadow">টাকা জমা</button>
+                        <button onclick="showAction('ADD_TRANSACTION')" class="bg-orange-500 text-white p-3 rounded-xl text-xs font-bold shadow">খরচ যোগ</button>
+                        <button onclick="showAction('ADD_FINE')" class="bg-red-500 text-white p-3 rounded-xl text-xs font-bold shadow">জরিমানা যোগ</button>
+                        <button onclick="showAction('EDIT_BAZAAR')" class="bg-amber-500 text-white p-3 rounded-xl text-xs font-bold shadow">বাজার এডিট</button>
+                        <button onclick="showAction('DELETE_BAZAAR')" class="bg-rose-700 text-white p-3 rounded-xl text-xs font-bold shadow">বাজার ডিলিট</button>
+                        <button onclick="showAction('EDIT_DEPOSIT')" class="bg-blue-400 text-white p-3 rounded-xl text-xs font-bold shadow">জমা এডিট</button>
+                        <button onclick="showAction('CHANGE_MANAGER_PIN')" class="bg-pink-600 text-white p-3 rounded-xl text-xs font-bold shadow">ম্যানেজার পিন পরিবর্তন</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab_director" class="tab-content w-full space-y-5">
+
+                <!-- পরিচালকের পাবলিক হিসাব - সবসময় দেখা যাবে -->
+                <div class="glass p-5 rounded-3xl shadow-sm border-t-4 border-emerald-500 animate-slide-up bg-emerald-50/30 dark:bg-emerald-900/10">
+                    <div class="flex justify-between items-start mb-3 border-b dark:border-emerald-800 pb-2">
+                        <h3 class="text-sm font-bold text-emerald-700 dark:text-emerald-400"><i class="fas fa-user-tie mr-2"></i>পরিচালকের হিসাব (ফিক্সড বিল)</h3>
+                    </div>
+                    <div class="mb-4">
+                        <p class="text-[10px] uppercase font-bold opacity-70 mb-1">এই মাসের ফিক্সড বিল সমূহ (মোট খরচ)</p>
+                        <div id="dirPublicBillsList" class="flex flex-wrap gap-2 mt-2">
+                            <span class="text-xs text-gray-400">কোনো বিল অ্যাড করা হয়নি।</span>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-end mb-4 bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-emerald-100 dark:border-emerald-800">
+                        <div>
+                            <p class="text-[10px] uppercase font-bold opacity-70">সবার মাঝে ভাগ (জনপ্রতি)</p>
+                            <h2 id="dirPubPerPerson" class="text-xl font-bold text-emerald-600">৳ ০</h2>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[10px] uppercase font-bold opacity-70">সর্বমোট ফিক্সড খরচ</p>
+                            <h2 id="dirPubTotalCost" class="text-xl font-bold text-red-500">৳ ০</h2>
+                        </div>
+                    </div>
+                    <button onclick="openDirectorPublicModal()" class="w-full bg-emerald-500 text-white py-3 rounded-xl text-xs font-bold shadow-md transition active:scale-95">
+                        <i class="fas fa-list-ul mr-2"></i>সকল বর্ডারের ফিক্সড জমা ও বকেয়ার হিসাব দেখুন
+                    </button>
+                </div>
+
+                <div id="dirLockScreen" class="glass p-8 rounded-3xl text-center border-2 border-emerald-400/30">
+                    <div class="inline-block p-4 bg-emerald-100 dark:bg-emerald-900/30 rounded-full mb-4">
+                        <i class="fas fa-user-tie text-4xl text-emerald-600 dark:text-emerald-400"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">পরিচালক প্যানেল লক</h3>
+                    <p class="text-xs text-gray-500 mb-4">ফিক্সড বিল, বকেয়া ও বর্ডার নিয়ন্ত্রণ করতে লগইন করুন</p>
+                    <button onclick="showRoleLogin('director')" class="bg-emerald-500 text-white px-8 py-3 rounded-2xl font-bold shadow-md active:scale-95 transition flex items-center gap-2 mx-auto"><i class="fas fa-sign-in-alt"></i> পরিচালক লগইন</button>
+                </div>
+
+                <div id="dirContent" class="hidden space-y-4 animate-fade-in">
+                    <div class="flex justify-between items-center glass p-4 rounded-2xl border-l-4 border-emerald-500">
+                        <h3 class="font-bold text-emerald-600 dark:text-emerald-400"><i class="fas fa-user-tie mr-2"></i>পরিচালক কন্ট্রোল</h3>
+                        <button onclick="processLogout()" class="text-[10px] text-red-500 font-bold bg-red-50 dark:bg-red-900/30 px-3 py-1 rounded-full"><i class="fas fa-lock mr-1"></i>লক করুন</button>
+                    </div>
+
+                    <!-- সকালের মিল সেটিং -->
+                    <div class="glass p-4 rounded-2xl border border-orange-200 dark:border-orange-900/40 bg-orange-50/30 dark:bg-orange-900/10">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="text-xs font-bold text-orange-700 dark:text-orange-400"><i class="fas fa-coffee mr-2"></i>সকালের মিল</p>
+                                <p class="text-[10px] text-gray-500 mt-0.5" id="breakfastRateDisplay">রেট লোড হচ্ছে...</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span id="breakfastStatusBadge" class="text-[9px] font-bold px-2 py-1 rounded-full bg-gray-200 text-gray-500">OFF</span>
+                                <button onclick="showAction('SET_BREAKFAST_RATE')" class="bg-orange-500 text-white text-[10px] px-3 py-1.5 rounded-lg font-bold shadow-sm active:scale-95 transition"><i class="fas fa-edit mr-1"></i>সেট করুন</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow text-center border-t-4 border-emerald-500">
+                            <p class="text-[10px] font-bold uppercase opacity-70 mb-1">বর্ডারদের থেকে মোট সংগ্রহ</p>
+                            <h2 id="dirPrivCollected" class="text-xl font-bold text-emerald-600">৳ ০</h2>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow text-center border-t-4 border-red-500">
+                            <p class="text-[10px] font-bold uppercase opacity-70 mb-1">মোট ফিক্সড বিল খরচ</p>
+                            <h2 id="dirPrivExpense" class="text-xl font-bold text-red-500">৳ ০</h2>
+                        </div>
+                    </div>
+
+                    <div class="glass p-4 rounded-3xl shadow-sm border border-emerald-100 dark:border-emerald-900/40">
+                        <h3 class="font-bold text-sm mb-3 border-b pb-2"><i class="fas fa-plus-circle mr-2 text-emerald-500"></i>অ্যাকশন মেন্যু</h3>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button onclick="showAction('ADD_FIXED_BILL')" class="col-span-2 bg-red-500 text-white py-3 rounded-xl font-bold shadow-sm"><i class="fas fa-receipt mr-2"></i>নতুন ফিক্সড বিল (খরচ) যুক্ত করুন</button>
+                            <button onclick="showAction('COLLECT_BILL')" class="col-span-2 bg-emerald-600 text-white py-3 rounded-xl font-bold shadow-sm"><i class="fas fa-hand-holding-usd mr-2"></i>বর্ডারের ফিক্সড জমা গ্রহণ করুন</button>
+                            
+                            <button onclick="showAction('DIRECTOR_ADD_BOARDER')" class="col-span-2 bg-slate-700 text-white py-2 rounded-xl text-xs font-bold shadow mt-2"><i class="fas fa-user-plus mr-2"></i>নতুন বর্ডার যুক্ত করুন</button>
+                            <button onclick="showAction('DIRECTOR_EDIT_BOARDER')" class="bg-slate-500 text-white py-2 rounded-xl text-xs font-bold shadow">বর্ডার ইনফো এডিট</button>
+                            <button onclick="showAction('DIRECTOR_DELETE_BOARDER')" class="bg-red-700 text-white py-2 rounded-xl text-xs font-bold shadow">বর্ডার ডিলিট</button>
+                            
+                            <button onclick="showAction('EDIT_DIRECTOR_BILL')" class="bg-amber-500 text-white py-2 rounded-xl text-xs font-bold shadow mt-2">বিল (খরচ) এডিট</button>
+                            <button onclick="showAction('DELETE_DIRECTOR_BILL')" class="bg-red-500 text-white py-2 rounded-xl text-xs font-bold shadow mt-2">বিল ডিলিট</button>
+                            <button onclick="showAction('EDIT_DIRECTOR_PAYMENT')" class="bg-amber-600 text-white py-2 rounded-xl text-xs font-bold shadow">ফিক্সড জমা এডিট</button>
+                            <button onclick="showAction('DELETE_DIRECTOR_PAYMENT')" class="bg-red-600 text-white py-2 rounded-xl text-xs font-bold shadow">জমা ডিলিট</button>
+                            
+                            <button onclick="showAction('CHANGE_DIRECTOR')" class="bg-gray-600 text-white py-3 rounded-xl text-xs font-bold shadow mt-2">পরিচালক পরিবর্তন</button>
+                            <button onclick="showAction('CHANGE_MANAGER')" class="bg-indigo-600 text-white py-3 rounded-xl text-xs font-bold shadow mt-2">ম্যানেজার পরিবর্তন</button>
+                        </div>
+                    </div>
+
+                    <div class="glass p-4 rounded-3xl shadow-sm">
+                        <h3 class="font-bold text-sm mb-3 border-b pb-2"><i class="fas fa-history mr-2 text-gray-500"></i>সাম্প্রতিক এডিট হিস্ট্রি (Note)</h3>
+                        <div id="dirAuditList" class="bg-gray-50 dark:bg-slate-800 p-3 rounded-xl text-[10px] space-y-2 max-h-40 overflow-y-auto border border-gray-200 dark:border-slate-700 hide-scrollbar"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <button onclick="openBazaarSubmit()" class="fixed bottom-20 right-4 bg-primary text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-2xl active:scale-95 transition-transform z-40 border-2 border-white/20"><i class="fas fa-shopping-basket"></i></button>
+
+        <div class="fixed bottom-0 w-full glass border-t dark:border-slate-800 p-1 flex justify-around items-center z-50 transition-all pb-1 sm:pb-2" id="bottomNavWrapper">
+            <button onclick="switchMainTab('home')" id="nav_home" class="nav-btn nav-active flex flex-col items-center p-1 w-1/6"><i class="fas fa-home text-base sm:text-lg mb-1"></i><span class="text-[8px] sm:text-[9px] font-bold">হোম</span></button>
+            <button onclick="switchMainTab('trans')" id="nav_trans" class="nav-btn flex flex-col items-center p-1 opacity-50 w-1/6"><i class="fas fa-list-alt text-base sm:text-lg mb-1"></i><span class="text-[8px] sm:text-[9px] font-bold">লিস্ট</span></button>
+            <button onclick="switchMainTab('boarders')" id="nav_boarders" class="nav-btn flex flex-col items-center p-1 opacity-50 w-1/6"><i class="fas fa-users text-base sm:text-lg mb-1"></i><span class="text-[8px] sm:text-[9px] font-bold">বর্ডার</span></button>
+            <button onclick="switchMainTab('archive')" id="nav_archive" class="nav-btn flex flex-col items-center p-1 opacity-50 w-1/6"><i class="fas fa-box-archive text-base sm:text-lg mb-1"></i><span class="text-[8px] sm:text-[9px] font-bold">আর্কাইভ</span></button>
+            <button onclick="switchMainTab('manager')" id="nav_manager" class="nav-btn flex flex-col items-center p-1 opacity-50 w-1/6"><i class="fas fa-shield-alt text-base sm:text-lg mb-1"></i><span class="text-[8px] sm:text-[9px] font-bold">ম্যানেজার</span></button>
+            <button onclick="switchMainTab('director')" id="nav_director" class="nav-btn flex flex-col items-center p-1 opacity-50 w-1/6"><i class="fas fa-user-tie text-base sm:text-lg mb-1"></i><span class="text-[8px] sm:text-[9px] font-bold">পরিচালক</span></button>
+        </div>
+    </div>
+
+    <div id="saLoginModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[999]">
+        <div class="bg-white dark:bg-darkCard p-6 rounded-3xl w-full max-w-sm shadow-2xl">
+            <h3 class="font-bold text-lg mb-4 text-primary">Super Admin Login</h3>
+            <input type="password" id="sa_pass_input" placeholder="Enter Password" class="w-full p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border-2 border-primary/30 text-center font-bold mb-5 outline-none dark:text-white">
+            <div class="flex gap-2">
+                <button onclick="closeM('saLoginModal')" class="flex-1 bg-gray-200 dark:bg-gray-700 py-3 rounded-xl font-bold">Cancel</button>
+                <button onclick="loginSA(event)" class="flex-1 bg-primary text-white py-3 rounded-xl font-bold shadow-md">Login</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="registerMessModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[999]">
+        <div class="bg-white dark:bg-darkCard p-6 rounded-3xl w-full max-w-sm shadow-2xl">
+            <h3 class="font-bold text-lg mb-4 text-indigo-600 border-b pb-2"><i class="fas fa-plus-circle mr-2"></i>নতুন মেস যুক্ত করুন</h3>
+            <div class="space-y-3 mb-5">
+                <input id="reg_mess_name" placeholder="মেসের নাম" class="w-full p-3 rounded-xl bg-gray-50 dark:bg-slate-700 outline-none text-sm dark:text-white border">
+                <input id="reg_manager_name" placeholder="ম্যানেজারের নাম" class="w-full p-3 rounded-xl bg-gray-50 dark:bg-slate-700 outline-none text-sm dark:text-white border">
+                <input id="reg_phone" type="number" placeholder="মোবাইল নম্বর" class="w-full p-3 rounded-xl bg-gray-50 dark:bg-slate-700 outline-none text-sm dark:text-white border">
+                <input id="reg_b_rate" type="number" placeholder="সকালের মিল রেট (যদি থাকে)" class="w-full p-3 rounded-xl bg-gray-50 dark:bg-slate-700 outline-none text-sm dark:text-white border">
+            </div>
+            <div class="flex gap-2">
+                <button onclick="closeM('registerMessModal')" class="flex-1 bg-gray-100 dark:bg-gray-700 py-3 rounded-xl font-bold text-xs">বাতিল</button>
+                <button onclick="submitMessReg(event)" class="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-bold text-xs">সাবমিট রিকোয়েস্ট</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="topLoginMenuModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-end sm:items-center justify-center p-0 sm:p-4 z-[2000]">
+        <div id="topLoginContent" class="bg-white dark:bg-darkCard p-6 rounded-t-3xl sm:rounded-3xl w-full max-w-sm shadow-2xl transition-transform transform translate-y-full">
+            <div class="flex justify-between items-center mb-5">
+                <h3 class="font-bold text-lg text-primary"><i class="fas fa-sign-in-alt mr-2"></i>লগইন প্যানেল</h3>
+                <button onclick="closeLoginMenu()" class="w-8 h-8 bg-gray-100 dark:bg-gray-800 rounded-full flex justify-center items-center opacity-70"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div id="loginOptionsArea" class="space-y-3">
+                <button onclick="showRoleLogin('boarder')" class="w-full bg-blue-50 dark:bg-slate-800 text-blue-600 dark:text-blue-400 py-3 rounded-2xl font-bold shadow-sm border border-blue-100 dark:border-slate-700 flex items-center justify-between px-4 active:scale-95 transition">
+                    <div class="flex items-center gap-3"><i class="fas fa-user text-lg"></i><span class="text-left leading-tight text-sm">বর্ডার হিসেবে লগইন<br><span class="text-[9px] font-normal opacity-70">মিল পরিবর্তন ও প্রোফাইল দেখতে</span></span></div>
+                    <i class="fas fa-chevron-right text-xs"></i>
+                </button>
+                <button onclick="showRoleLogin('manager')" class="w-full bg-orange-50 dark:bg-slate-800 text-orange-600 dark:text-orange-400 py-3 rounded-2xl font-bold shadow-sm border border-orange-100 dark:border-slate-700 flex items-center justify-between px-4 active:scale-95 transition">
+                    <div class="flex items-center gap-3"><i class="fas fa-shield-alt text-lg"></i><span class="text-left leading-tight text-sm">ম্যানেজার লগইন<br><span class="text-[9px] font-normal opacity-70">মেসের বাজার ও মিল নিয়ন্ত্রণ করতে</span></span></div>
+                    <i class="fas fa-chevron-right text-xs"></i>
+                </button>
+                <button onclick="showRoleLogin('director')" class="w-full bg-emerald-50 dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 py-3 rounded-2xl font-bold shadow-sm border border-emerald-100 dark:border-slate-700 flex items-center justify-between px-4 active:scale-95 transition">
+                    <div class="flex items-center gap-3"><i class="fas fa-user-tie text-lg"></i><span class="text-left leading-tight text-sm">পরিচালক লগইন<br><span class="text-[9px] font-normal opacity-70">ফিক্সড বিল ও বকেয়া নিয়ন্ত্রণ করতে</span></span></div>
+                    <i class="fas fa-chevron-right text-xs"></i>
+                </button>
+            </div>
+
+            <div id="loggedInArea" class="hidden space-y-4">
+                <div class="bg-gray-50 dark:bg-slate-800 p-4 rounded-2xl border dark:border-slate-700 text-center">
+                    <p class="text-[10px] uppercase font-bold text-gray-400 mb-1">বর্তমান প্রোফাইল</p>
+                    <h3 id="li_name" class="font-bold text-lg text-primary">...</h3>
+                    <p id="li_role" class="text-xs font-bold text-gray-500 mb-3">...</p>
+                    <button onclick="processLogout()" class="bg-red-100 text-red-600 px-6 py-2 rounded-xl text-xs font-bold shadow-sm"><i class="fas fa-sign-out-alt mr-2"></i>লগআউট করুন</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="roleLoginModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[2050]">
+        <div class="bg-white dark:bg-darkCard p-6 rounded-3xl w-full max-w-sm shadow-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="rl_title" class="font-bold text-lg text-primary">...</h3>
+                <button onclick="closeM('roleLoginModal')" class="text-gray-500"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div id="rl_boarder_select" class="hidden mb-3">
+                <select id="rl_b_name" class="w-full p-4 rounded-xl bg-gray-50 text-gray-900 dark:bg-slate-700 dark:text-white text-center border font-bold outline-none"></select>
+            </div>
+            <input type="password" id="rl_pin" inputmode="numeric" placeholder="আপনার পিন নম্বর দিন" class="w-full p-4 rounded-xl bg-gray-50 dark:bg-slate-700 text-center mb-3 border font-bold tracking-widest text-lg outline-none text-gray-900">
+            
+            <div class="text-right mb-4" id="rl_forgot_box">
+                <button onclick="forgotPasswordFlow()" class="text-[10px] text-blue-500 font-bold hover:underline">পিন ভুলে গেছেন?</button>
+            </div>
+            
+            <button onclick="executeLogin(event)" class="w-full bg-primary text-white py-3 rounded-xl font-bold shadow-md">লগইন</button>
+        </div>
+    </div>
+
+    <div id="directorPublicModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-end sm:items-center justify-center p-0 sm:p-4 z-[200]">
+        <div id="dirPubContent" class="bg-white dark:bg-darkCard p-6 rounded-t-3xl sm:rounded-3xl w-full max-w-sm shadow-2xl transition-transform transform translate-y-full flex flex-col max-h-[80vh]">
+            <div class="flex justify-between items-center mb-4 border-b dark:border-slate-700 pb-2">
+                <h3 class="font-bold text-lg text-emerald-600"><i class="fas fa-list-ul mr-2"></i>বোর্ডারদের ফিক্সড বিল ও জমার হিসাব</h3>
+                <button onclick="closeDirectorPublicModal()" class="w-8 h-8 bg-gray-100 dark:bg-gray-800 rounded-full flex justify-center items-center opacity-70"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-xl mb-3 text-center">
+                <p class="text-[10px] text-gray-500 uppercase font-bold">জনপ্রতি ফিক্সড খরচ</p>
+                <h3 id="modalDirPerPersonCost" class="text-lg font-bold text-emerald-600">৳ ০</h3>
+            </div>
+            <div class="flex justify-between px-2 mb-2 text-[10px] font-bold text-gray-400 uppercase">
+                <span>নাম</span>
+                <span>বকেয়া / অ্যাডভান্স</span>
+            </div>
+            <div class="flex-1 overflow-y-auto hide-scrollbar pb-4 space-y-2" id="dirPubDueList"></div>
+        </div>
+    </div>
+
+    <div id="pinModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[250]">
+        <div class="bg-white dark:bg-darkCard p-6 rounded-3xl w-full max-w-xs shadow-2xl text-center">
+            <h3 id="pinTitle" class="font-bold text-sm mb-4">পিন দিন</h3>
+            <input type="password" id="pinInput" inputmode="numeric" placeholder="****" class="w-full p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border-2 border-primary/30 text-center tracking-[0.5em] font-bold text-2xl focus:outline-none focus:border-primary dark:text-white text-gray-900 mb-5">
+            <div class="flex gap-3">
+                <button onclick="closePin()" class="flex-1 bg-gray-200 dark:bg-gray-700 py-3 rounded-xl font-bold">বাতিল</button>
+                <button onclick="resolvePin()" class="flex-1 bg-primary text-white py-3 rounded-xl font-bold shadow-md">ওকে</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="bazaarModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[150]">
+        <div class="bg-white dark:bg-darkCard p-6 rounded-3xl w-full max-w-sm shadow-2xl">
+            <h3 class="font-bold text-green-600 mb-4 border-b dark:border-gray-700 pb-2"><i class="fas fa-shopping-basket mr-2"></i>বাজার / খরচ সাবমিট</h3>
+            <p class="text-[10px] font-bold text-gray-400 mb-1 uppercase">বাজারকারী নির্বাচন করুন</p>
+            <select id="bzrName" class="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 outline-none mb-3 text-sm dark:text-white text-gray-900"></select>
+            <input id="bzrCost" type="number" inputmode="numeric" placeholder="মোট খরচ (৳)" class="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 outline-none mb-3 text-sm dark:text-white text-gray-900">
+            <input id="bzrItems" placeholder="বাজারের আইটেম / খরচের বিবরণ" class="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 outline-none mb-5 text-sm dark:text-white text-gray-900">
+            <div class="flex gap-3">
+                <button onclick="closeM('bazaarModal')" class="flex-1 bg-gray-200 dark:bg-gray-700 py-2 rounded-xl font-bold">বাতিল</button>
+                <button onclick="submitPendingBazaar(event)" class="flex-1 bg-green-500 text-white py-2 rounded-xl font-bold shadow-md">সাবমিট</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[150]">
+        <div class="bg-white dark:bg-darkCard p-6 rounded-3xl w-full max-w-sm shadow-2xl">
+            <h3 id="mTitle" class="font-bold text-lg mb-4 text-primary border-b dark:border-gray-700 pb-2">...</h3>
+            <div id="mInputs" class="space-y-3 mb-5 max-h-[60vh] overflow-y-auto hide-scrollbar"></div>
+            <div class="flex gap-2">
+                <button onclick="closeM('modal')" class="flex-1 bg-gray-100 dark:bg-gray-700 py-3 rounded-xl font-bold text-xs">বাতিল</button>
+                <button id="submitActionBtn" onclick="submitAction(event)" class="flex-1 bg-primary text-white py-3 rounded-xl font-bold text-xs">সাবমিট</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="mealM" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[150]">
+        <div class="bg-white dark:bg-darkCard p-5 rounded-3xl w-full max-w-md max-h-[85vh] overflow-y-auto shadow-2xl hide-scrollbar">
+            <h3 class="font-bold text-lg mb-3 text-teal-600 dark:text-teal-400 border-b dark:border-gray-700 pb-2">ম্যানুয়াল মিল এন্ট্রি</h3>
+            <div class="flex text-[10px] font-bold text-gray-400 uppercase mb-2 px-2">
+                <span class="w-1/3">নাম</span>
+                <span id="mealBreakfastHeader" class="flex-1 text-center ml-4">সকাল</span>
+                <span class="flex-1 text-center">দুপুর</span>
+                <span class="flex-1 text-center">রাত</span>
+            </div>
+            <div id="mList" class="space-y-2 mb-5"></div>
+            <div class="flex justify-end gap-3">
+                <button onclick="closeM('mealM')" class="text-gray-500 font-bold px-4 py-2">বাতিল</button>
+                <button onclick="submitMeals(event)" class="bg-teal-500 text-white px-6 py-2 rounded-xl font-bold shadow-md">সেভ করুন</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="reportM" class="fixed inset-0 bg-gray-100 z-[300] hidden overflow-y-auto">
+        <div class="flex justify-between items-center p-4 print-hidden bg-white shadow-sm sticky top-0 z-10">
+            <button onclick="closeM('reportM')" class="text-red-500 font-bold px-4 py-2 bg-red-50 rounded-xl flex items-center gap-2"><i class="fas fa-arrow-left"></i> ফিরে যান</button>
+            <button onclick="window.print()" class="bg-primary text-white px-5 py-2 rounded-xl font-bold shadow flex items-center gap-2"><i class="fas fa-file-pdf"></i> PDF সেভ</button>
+        </div>
+        <div id="printArea" class="max-w-lg mx-auto bg-white my-4 rounded-2xl shadow-xl overflow-hidden">
+            <div style="background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);padding:28px 24px 20px;color:white;text-align:center;">
+                <div style="font-size:28px;margin-bottom:6px;">🏠</div>
+                <h1 id="rMessTitle" style="font-size:22px;font-weight:800;margin:0 0 4px;letter-spacing:0.5px;">আইডিয়াল হোম</h1>
+                <p style="font-size:11px;opacity:0.85;margin:0 0 2px;text-transform:uppercase;letter-spacing:2px;">মাসিক মেস রিপোর্ট</p>
+                <div style="margin-top:10px;background:rgba(255,255,255,0.18);border-radius:20px;padding:5px 18px;display:inline-block;">
+                    <p id="reportMonth" style="font-size:13px;font-weight:700;margin:0;"></p>
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px;background:#f8fafc;">
+                <div style="background:white;border-radius:14px;padding:14px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.06);border-top:3px solid #ef4444;">
+                    <p style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin:0 0 5px;">মোট খরচ</p>
+                    <h2 id="rExp" style="font-size:20px;font-weight:800;color:#ef4444;margin:0;"></h2>
+                </div>
+                <div style="background:white;border-radius:14px;padding:14px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.06);border-top:3px solid #f97316;">
+                    <p style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin:0 0 5px;">মিল রেট</p>
+                    <h2 id="rRate" style="font-size:20px;font-weight:800;color:#f97316;margin:0;"></h2>
+                </div>
+            </div>
+            <div style="padding:0 16px 12px;background:#f8fafc;">
+                <div style="background:#eef2ff;border-left:4px solid #4f46e5;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;">
+                    <span style="font-size:20px;">👤</span>
+                    <div>
+                        <p style="font-size:10px;color:#6366f1;font-weight:700;text-transform:uppercase;margin:0 0 2px;">ম্যানেজার</p>
+                        <p id="rMgrName" style="font-size:15px;font-weight:800;color:#3730a3;margin:0;"></p>
+                    </div>
+                </div>
+            </div>
+            <div style="padding:0 16px 16px;background:#f8fafc;">
+                <h3 style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin:0 0 8px;">বর্ডারওয়ারি হিসাব</h3>
+                <div style="overflow-x:auto;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+                    <table style="width:100%;border-collapse:collapse;font-size:12px;background:white;">
+                        <thead>
+                            <tr style="background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;">
+                                <th style="padding:10px 12px;text-align:left;font-size:11px;">নাম</th>
+                                <th style="padding:10px 8px;text-align:right;font-size:11px;">জমা</th>
+                                <th style="padding:10px 8px;text-align:right;font-size:11px;">মিল</th>
+                                <th style="padding:10px 8px;text-align:right;font-size:11px;">খরচ</th>
+                                <th style="padding:10px 8px;text-align:right;font-size:11px;">ব্যালেন্স</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportTable"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div style="background:linear-gradient(135deg,#1e293b,#0f172a);padding:18px 20px;text-align:center;">
+                <p style="font-size:12px;color:#94a3b8;margin:0 0 6px;line-height:1.8;">ম্যানেজারের সেবায় কোনো ত্রুটি হয়ে থাকলে ক্ষমার দৃষ্টিতে দেখবেন।</p>
+                <p style="font-size:11px;color:#475569;margin:6px 0 0;">Generated securely via System</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxtiCFzakfFunCMZQw6DavC-fESmLj0c36rdrLigwRCeDvwXPiTgIIGwynQZSL9V9UT/exec"; 
+        
+        let windowAppData = null, myChart = null;
+        let currentMessId = "", currentMessName = "";
+        
+        // Unified Auth Variables
+        let loggedBoarderId = "", loggedBoarderName = "", loggedBoarderPin = "";
+        let isManagerLogged = false, managerPin = "";
+        let isDirectorLogged = false, directorPin = "";
+        let loginTargetRole = ""; 
+        let pendingLoginAction = null; 
+
+        // Utilities
+        function escapeHTML(str) { 
+            return String(str||"").replace(/[&<>'"]/g, t => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[t] || t)); 
+        }
+
+        // Button Spinner Logic (Fixed)
+        function setBtnLoading(btn) { 
+            if(!btn) return null; 
+            let oldHtml = btn.innerHTML; 
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; 
+            btn.disabled = true; 
+            return oldHtml; 
+        }
+        
+        function resetBtn(btn, oldHtml) { 
+            if(!btn || !oldHtml) return; 
+            btn.innerHTML = oldHtml; 
+            btn.disabled = false; 
+        }
+        
+        function showToast(msg, isError = false) {
+            let toast = document.getElementById('customToast'); 
+            toast.innerText = msg;
+            toast.className = `fixed top-14 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-full shadow-2xl z-[10000] text-xs font-bold text-white transition-opacity duration-300 ${isError ? 'bg-red-500' : 'bg-green-500'}`;
+            toast.style.display = 'block'; 
+            
+            setTimeout(() => { toast.style.opacity = '1'; }, 10);
+            setTimeout(() => { 
+                toast.style.opacity = '0'; 
+                setTimeout(() => toast.style.display = 'none', 300); 
+            }, 3000);
+        }
+
+        let confirmCallback = null;
+        function showConfirm(msg, cb) { 
+            document.getElementById('confirmMsg').innerText = msg; 
+            openM('confirmModal'); 
+            confirmCallback = cb; 
+        }
+        function closeConfirm(res) { 
+            closeM('confirmModal'); 
+            if(confirmCallback) confirmCallback(res); 
+        }
+
+        function openM(id) { 
+            document.getElementById(id).classList.remove('hidden'); 
+            document.getElementById(id).classList.add('flex'); 
+        }
+        function closeM(id) { 
+            document.getElementById(id).classList.remove('flex'); 
+            document.getElementById(id).classList.add('hidden'); 
+        }
+
+        let pinPromise = null;
+        function askForPin(msg) { 
+            document.getElementById('pinTitle').innerText = msg; 
+            document.getElementById('pinInput').value = ''; 
+            openM('pinModal'); 
+            setTimeout(() => document.getElementById('pinInput').focus(), 100); 
+            return new Promise(r => { pinPromise = r; }); 
+        }
+        function resolvePin() { 
+            closeM('pinModal'); 
+            if(pinPromise) pinPromise(document.getElementById('pinInput').value); 
+        }
+        function closePin() { 
+            closeM('pinModal'); 
+            if(pinPromise) pinPromise(null); 
+        }
+
+        // Theme and Utils
+        if(localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark'); 
+            document.getElementById('themeIcon').classList.replace('fa-moon', 'fa-sun');
+        }
+        
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            let isD = document.documentElement.classList.contains('dark');
+            localStorage.theme = isD ? 'dark' : 'light';
+            document.getElementById('themeIcon').classList.replace(isD ? 'fa-moon' : 'fa-sun', isD ? 'fa-sun' : 'fa-moon');
+            if(myChart) { 
+                Chart.defaults.color = isD ? '#9ca3af' : '#4b5563'; 
+                myChart.update(); 
+            }
+        }
+
+        function parseSheetDate(dStr) {
+            if(!dStr) return null; 
+            let ds = String(dStr).trim().split('T')[0].split(' ')[0]; 
+            let y, m, d;
+            
+            if(ds.includes('/')) { 
+                let p = ds.split('/'); 
+                if(p.length === 3) { 
+                    if(p[2].length === 4) { y = p[2]; m = p[1]; d = p[0]; } 
+                    else if(p[0].length === 4) { y = p[0]; m = p[1]; d = p[2]; } 
+                } 
+            } 
+            else if(ds.includes('-')) { 
+                let p = ds.split('-'); 
+                if(p.length === 3 && p[0].length === 4) { y = p[0]; m = p[1]; d = p[2]; } 
+            }
+            
+            if(y && m && d) return new Date(Date.UTC(y, m-1, d, 12, 0, 0));
+            let parsed = new Date(ds); 
+            return isNaN(parsed.getTime()) ? null : new Date(Date.UTC(parsed.getFullYear(), parsed.getMonth(), parsed.getDate(), 12, 0, 0));
+        }
+
+        function isCurrentMonth(dStr) { 
+            let d = parseSheetDate(dStr); 
+            if (!d) return false; 
+            let now = new Date(); 
+            return d.getUTCMonth() === now.getMonth() && d.getUTCFullYear() === now.getFullYear(); 
+        }
+
+        function getAvatarColor(name) { 
+            const colors = ['bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500']; 
+            let hash = 0; 
+            if(!name) return colors[0]; 
+            for(let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash); 
+            return colors[Math.abs(hash) % colors.length]; 
+        }
+
+        // ==========================================
+        // INITIALIZATION
+        // ==========================================
+        window.onload = () => {
+            currentMessId = localStorage.getItem('mess_id') || "";
+            currentMessName = localStorage.getItem('mess_name') || "";
+            
+            // Restore Auth
+            loggedBoarderId = localStorage.getItem('b_id') || ""; 
+            loggedBoarderName = localStorage.getItem('b_name') || ""; 
+            loggedBoarderPin = localStorage.getItem('b_pin') || "";
+            
+            isManagerLogged = localStorage.getItem('mgr_logged') === 'true'; 
+            managerPin = localStorage.getItem('mgr_pin') || "";
+            
+            isDirectorLogged = localStorage.getItem('dir_logged') === 'true'; 
+            directorPin = localStorage.getItem('dir_pin') || "";
+
+            const hour = new Date().getHours();
+            document.getElementById('greeting').innerText = (hour >= 5 && hour < 12) ? "শুভ সকাল" : (hour >= 12 && hour < 17) ? "শুভ দুপুর" : (hour >= 17 && hour < 20) ? "শুভ বিকাল" : "শুভ রাত্রি";
+            document.getElementById('monthName').innerText = new Date().toLocaleString('bn-BD', {month:'long', year:'numeric'});
+
+            if(currentMessId) { loadMainApp(); } else { loadMessList(); }
+        };
+
+        // SaaS / Master Logic
+        async function loadMessList() {
+            try {
+                let res = await fetch(SCRIPT_URL + "?action=GET_MESS_LIST"); 
+                let list = await res.json();
+                
+                // Text color set for Dropdown in Dark Mode
+                let opts = '<option value="" disabled selected class="text-gray-900 bg-white">আপনার মেস সিলেক্ট করুন</option>';
+                list.forEach(m => opts += `<option value="${m.id}" class="text-gray-900 bg-white font-bold">${m.name}</option>`);
+                
+                document.getElementById('messDropdown').innerHTML = opts;
+                document.getElementById('splashScreen').style.opacity = '0'; 
+                
+                setTimeout(()=>document.getElementById('splashScreen').classList.add('hidden'), 500);
+                document.getElementById('loadingMesses').classList.add('hidden'); 
+                document.getElementById('selectMessBox').classList.remove('hidden');
+                document.getElementById('messSelectionScreen').classList.remove('hidden'); 
+                document.getElementById('messSelectionScreen').classList.add('flex');
+            } catch(e) { 
+                showToast("মেস লিস্ট লোড করতে সমস্যা!", true); 
+            }
+        }
+
+        async function submitMessReg(e) {
+            let payload = { 
+                action: "REGISTER_MESS", 
+                mess_name: document.getElementById('reg_mess_name').value, 
+                manager_name: document.getElementById('reg_manager_name').value, 
+                phone: document.getElementById('reg_phone').value, 
+                b_rate: document.getElementById('reg_b_rate').value 
+            };
+            
+            if(!payload.mess_name || !payload.manager_name) return showToast("সব তথ্য দিন!", true);
+            let btn = e ? e.currentTarget : null; 
+            let old = setBtnLoading(btn);
+            
+            try { 
+                let res = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify(payload)}); 
+                showToast(await res.text()); 
+                closeM('registerMessModal'); 
+            } catch(err) { 
+                showToast("Error", true); 
+            } finally { 
+                resetBtn(btn, old); 
+            }
+        }
+
+        function enterMess(e) {
+            let sel = document.getElementById('messDropdown');
+            if(!sel.value) return showToast("দয়া করে মেস নির্বাচন করুন!", true);
+            
+            let btn = e ? e.currentTarget : null;
+            if(btn) { btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> লোড হচ্ছে...'; btn.disabled = true; }
+
+            currentMessId = sel.value; 
+            currentMessName = sel.options[sel.selectedIndex].text;
+            localStorage.setItem('mess_id', currentMessId); 
+            localStorage.setItem('mess_name', currentMessName);
+            if(window.OneSignal) OneSignal.push(["sendTag", "mess_id", currentMessId]);
+            
+            // [FIX-1] messSelectionScreen এবং splashScreen উভয়ই hide করতে হবে
+            document.getElementById('messSelectionScreen').classList.remove('flex'); 
+            document.getElementById('messSelectionScreen').classList.add('hidden');
+            // splashScreen hide করা (z-index conflict এড়াতে)
+            let sp = document.getElementById('splashScreen');
+            if(sp) { sp.style.opacity = '0'; setTimeout(() => sp.classList.add('hidden'), 300); }
+            
+            setTimeout(() => { loadMainApp(); }, 200);
+        }
+
+        function logoutMess() { 
+            localStorage.clear(); 
+            location.reload(); 
+        }
+
+        // ==========================================
+        // SUPER ADMIN SYSTEM
+        // ==========================================
+        async function loginSA(e) {
+            let p = document.getElementById('sa_pass_input').value; 
+            if(!p) return;
+            
+            let btn = e.currentTarget; 
+            let old = setBtnLoading(btn);
+            
+            try {
+                let res = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({action:"SUPER_ADMIN_LOGIN", password: p})});
+                let d = await res.json();
+                if(d.status === "success") { 
+                    closeM('saLoginModal'); 
+                    document.getElementById('messSelectionScreen').classList.remove('flex'); 
+                    document.getElementById('messSelectionScreen').classList.add('hidden'); 
+                    document.getElementById('superAdminScreen').classList.remove('hidden'); 
+                    document.getElementById('superAdminScreen').classList.add('flex'); 
+                    loadSADashboard(); 
+                } else { 
+                    showToast("ভুল পাসওয়ার্ড!", true); 
+                }
+            } catch(e) { 
+                showToast("Network error", true); 
+            } finally { 
+                resetBtn(btn, old); 
+            }
+        }
+
+        function saSwitchTab(tab) {
+            document.getElementById('sa_pending_tab').classList.toggle('hidden', tab !== 'pending');
+            document.getElementById('sa_approved_tab').classList.toggle('hidden', tab !== 'approved');
+            
+            document.getElementById('saBtn_pending').className = tab === 'pending' ? 'flex-1 py-2 bg-white dark:bg-slate-700 rounded-lg font-bold shadow-sm text-primary transition' : 'flex-1 py-2 font-bold text-gray-500 dark:text-gray-400 transition';
+            document.getElementById('saBtn_approved').className = tab === 'approved' ? 'flex-1 py-2 bg-white dark:bg-slate-700 rounded-lg font-bold shadow-sm text-primary transition' : 'flex-1 py-2 font-bold text-gray-500 dark:text-gray-400 transition';
+        }
+
+        async function loadSADashboard() {
+            try {
+                let res = await fetch(SCRIPT_URL + "?action=GET_ALL_SA_MESSES&_t=" + new Date().getTime()); 
+                let data = await res.json(); 
+                
+                // Pending Messes Render
+                if(data.pending && data.pending.length > 0) { 
+                    document.getElementById('pendingList').innerHTML = data.pending.map(m => `
+                        <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700">
+                            <h4 class="font-bold text-primary mb-1">${escapeHTML(m.mess_name)}</h4>
+                            <p class="text-xs text-gray-500 mb-3">ম্যানেজার: ${escapeHTML(m.manager_name)} | ফোন: ${escapeHTML(m.phone)}</p>
+                            <div class="flex gap-2">
+                                <button onclick="saAction('${m.id}', '${escapeHTML(m.mess_name)}', '${escapeHTML(m.manager_name)}', '${escapeHTML(m.phone)}', '${m.b_rate}', 'APPROVE_MESS', event)" class="flex-1 bg-green-500 text-white py-2 rounded-lg text-xs font-bold shadow">Approve</button>
+                                <button onclick="saAction('${m.id}', '', '', '', '', 'REJECT_MESS_REQUEST', event)" class="flex-1 bg-red-500 text-white py-2 rounded-lg text-xs font-bold shadow">Reject</button>
+                            </div>
+                        </div>`).join('');
+                } else { 
+                    document.getElementById('pendingList').innerHTML = '<p class="text-center text-sm opacity-60 my-5">কোনো পেন্ডিং রিকোয়েস্ট নেই।</p>'; 
+                }
+
+                // Approved Messes Render
+                if(data.approved && data.approved.length > 0) { 
+                    document.getElementById('approvedList').innerHTML = data.approved.map(m => `
+                        <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border-l-4 border-emerald-500 mb-3">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h4 class="font-bold text-emerald-600 mb-1">${escapeHTML(m.mess_name)}</h4>
+                                    <p class="text-[10px] text-gray-500 mb-1">ID: ${m.id}</p>
+                                    <p class="text-xs text-gray-600 dark:text-gray-300 mb-3"><i class="fas fa-user text-xs"></i> ${escapeHTML(m.manager_name)} | <i class="fas fa-phone text-xs"></i> ${escapeHTML(m.phone)}</p>
+                                </div>
+                                <span class="text-[9px] font-bold px-2 py-1 rounded bg-gray-100 dark:bg-slate-700 ${m.status === 'PAUSED' ? 'text-orange-500' : 'text-green-500'}">${m.status}</span>
+                            </div>
+                            <div class="flex gap-2 border-t dark:border-slate-700 pt-2 mt-2">
+                                ${m.status === 'ACTIVE' ? `<button onclick="saAction('${m.id}', '', '', '', '', 'PAUSE_MESS', event)" class="flex-1 bg-orange-500 text-white py-1.5 rounded text-[10px] font-bold shadow"><i class="fas fa-pause mr-1"></i>Pause</button>` : `<button onclick="saAction('${m.id}', '', '', '', '', 'RESUME_MESS', event)" class="flex-1 bg-green-500 text-white py-1.5 rounded text-[10px] font-bold shadow"><i class="fas fa-play mr-1"></i>Resume</button>`}
+                                <button onclick="saAction('${m.id}', '', '', '', '', 'DELETE_MESS', event)" class="flex-1 bg-red-600 text-white py-1.5 rounded text-[10px] font-bold shadow"><i class="fas fa-trash mr-1"></i>Delete</button>
+                            </div>
+                        </div>`).join('');
+                } else {
+                    document.getElementById('approvedList').innerHTML = '<p class="text-center text-sm opacity-60 my-5">কোনো অ্যাপ্রুভড মেস নেই।</p>';
+                }
+            } catch(e) { 
+                document.getElementById('pendingList').innerHTML = '<p class="text-center text-red-500 my-5">Error loading requests.</p>'; 
+            }
+        }
+
+        async function saAction(id, m_name, mgr_name, ph, brate, act, e) {
+            let btn = e ? e.currentTarget : null; 
+            let old = setBtnLoading(btn);
+            
+            // Delete confirmation
+            if(act === 'DELETE_MESS') {
+                if(!confirm("আপনি কি নিশ্চিত যে এই মেসটি সম্পূর্ণ ডিলিট করতে চান?")) {
+                    return resetBtn(btn, old);
+                }
+            }
+            
+            try {
+                let res = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({action: act, req_id: id, mess_name: m_name, manager_name: mgr_name, phone: ph, b_rate: brate})});
+                showToast(await res.text()); 
+                loadSADashboard();
+            } catch(err) { 
+                showToast("Error", true); 
+                resetBtn(btn, old); 
+            }
+        }
+
+        function logoutSA() { 
+            document.getElementById('superAdminScreen').classList.remove('flex'); 
+            document.getElementById('superAdminScreen').classList.add('hidden'); 
+            document.getElementById('messSelectionScreen').classList.remove('hidden'); 
+            document.getElementById('messSelectionScreen').classList.add('flex'); 
+        }
+
+        // ==========================================
+        // UNIFIED LOGIN SYSTEM
+        // ==========================================
+        function openTopLoginMenu() {
+            document.getElementById('topLoginMenuModal').classList.remove('hidden'); 
+            document.getElementById('topLoginMenuModal').classList.add('flex');
+            setTimeout(() => document.getElementById('topLoginContent').classList.remove('translate-y-full'), 10);
+            
+            if(loggedBoarderId || isManagerLogged || isDirectorLogged) {
+                document.getElementById('loginOptionsArea').classList.add('hidden'); 
+                document.getElementById('loggedInArea').classList.remove('hidden');
+                
+                let names = []; let roles = [];
+                if(isDirectorLogged) { names.push("পরিচালক"); roles.push("ডিরেক্টর প্যানেল"); }
+                if(isManagerLogged) { names.push("ম্যানেজার"); roles.push("ম্যানেজার প্যানেল"); }
+                if(loggedBoarderId) { names.push(loggedBoarderName); roles.push("মেস বর্ডার"); }
+                
+                document.getElementById('li_name').innerText = names.join(" ও "); 
+                document.getElementById('li_role').innerText = roles.join(" | ");
+            } else {
+                document.getElementById('loginOptionsArea').classList.remove('hidden'); 
+                document.getElementById('loggedInArea').classList.add('hidden');
+            }
+        }
+        
+        function closeLoginMenu() { 
+            document.getElementById('topLoginContent').classList.add('translate-y-full'); 
+            setTimeout(() => { 
+                document.getElementById('topLoginMenuModal').classList.add('hidden'); 
+                document.getElementById('topLoginMenuModal').classList.remove('flex'); 
+            }, 300); 
+        }
+
+        function showRoleLogin(role) {
+            loginTargetRole = role; 
+            closeLoginMenu();
+            
+            setTimeout(() => {
+                if(role === 'boarder') {
+                    document.getElementById('rl_title').innerText = "বর্ডার লগইন";
+                    document.getElementById('rl_boarder_select').classList.remove('hidden'); 
+                    document.getElementById('rl_forgot_box').classList.remove('hidden');
+                    document.getElementById('rl_pin').placeholder = "আপনার পিন নম্বর দিন";
+                    
+                    let bOpts = `<option value="" disabled selected class="text-gray-900 bg-white font-bold">আপনার নাম সিলেক্ট করুন</option>`;
+                    if(windowAppData && windowAppData.boarders) { 
+                        windowAppData.boarders.slice(1).forEach(b => { 
+                            bOpts += `<option value="${b[0]}" class="text-gray-900 bg-white font-bold">${b[1]}</option>`; 
+                        }); 
+                    }
+                    document.getElementById('rl_b_name').innerHTML = bOpts;
+                } else if(role === 'manager') {
+                    document.getElementById('rl_title').innerHTML = '<i class="fas fa-shield-alt mr-2 text-orange-500"></i>ম্যানেজার লগইন';
+                    document.getElementById('rl_boarder_select').classList.add('hidden'); 
+                    document.getElementById('rl_forgot_box').classList.add('hidden');
+                    document.getElementById('rl_pin').placeholder = "ম্যানেজার পিন দিন";
+                } else if(role === 'director') {
+                    document.getElementById('rl_title').innerHTML = '<i class="fas fa-user-tie mr-2 text-emerald-500"></i>পরিচালক লগইন';
+                    document.getElementById('rl_boarder_select').classList.add('hidden'); 
+                    document.getElementById('rl_forgot_box').classList.add('hidden');
+                    document.getElementById('rl_pin').placeholder = "পরিচালকের পিন দিন (Default: 1234)";
+                }
+                openM('roleLoginModal');
+            }, 300);
+        }
+
+        async function executeLogin(e) {
+            let p = document.getElementById('rl_pin').value; 
+            if(!p) return showToast("পিন দিন!", true);
+            
+            let btn = e ? e.currentTarget : null; 
+            let old = setBtnLoading(btn);
+
+            try {
+                if(loginTargetRole === 'boarder') {
+                    let s = document.getElementById('rl_b_name'); 
+                    let bId = s.value; 
+                    let bName = s.options[s.selectedIndex]?.text;
+                    
+                    if(!bId) { showToast("নাম সিলেক্ট করুন!", true); return resetBtn(btn, old); }
+                    
+                    let res = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({mess_id: currentMessId, action: "BOARDER_LOGIN", name: bName, pin: p})}); 
+                    let d = await res.json();
+                    
+                    if(d.status === "success") {
+                        loggedBoarderId = d.boarder_id; 
+                        loggedBoarderName = d.name; 
+                        loggedBoarderPin = p;
+                        
+                        localStorage.setItem('b_id', loggedBoarderId); 
+                        localStorage.setItem('b_name', loggedBoarderName); 
+                        localStorage.setItem('b_pin', loggedBoarderPin);
+                        
+                        showToast("লগইন সফল!"); 
+                        closeM('roleLoginModal'); 
+                        renderUI(windowAppData);
+                        
+                        if(pendingLoginAction) { 
+                           if(pendingLoginAction === 'boarders') switchMainTab('boarders');
+                           else if(pendingLoginAction === 'SUBMIT_BAZAAR') openBazaarSubmit();
+                           pendingLoginAction = null; 
+                        }
+                    } else { 
+                        showToast("ভুল পিন!", true); 
+                    }
+                } else if(loginTargetRole === 'manager') {
+                    let res = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({mess_id: currentMessId, action: "MANAGER_LOGIN", pin: p})}); 
+                    let d = await res.json();
+                    
+                    if(d.status === "success") {
+                        isManagerLogged = true; managerPin = p;
+                        localStorage.setItem('mgr_logged', 'true'); 
+                        localStorage.setItem('mgr_pin', managerPin);
+                        
+                        showToast("ম্যানেজার প্যানেল আনলক হয়েছে!"); 
+                        closeM('roleLoginModal'); 
+                        renderUI(windowAppData); 
+                        switchMainTab('manager');
+                    } else { 
+                        showToast("ভুল পিন!", true); 
+                    }
+                } else if(loginTargetRole === 'director') {
+                    let res = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({mess_id: currentMessId, action: "DIRECTOR_LOGIN", pin: p})}); 
+                    let d = await res.json();
+                    
+                    if(d.status === "success") {
+                        isDirectorLogged = true; directorPin = p;
+                        localStorage.setItem('dir_logged', 'true'); 
+                        localStorage.setItem('dir_pin', directorPin);
+                        
+                        showToast("পরিচালক প্যানেল আনলক হয়েছে!"); 
+                        closeM('roleLoginModal'); 
+                        renderUI(windowAppData); 
+                        switchMainTab('director');
+                    } else { 
+                        showToast("ভুল পিন!", true); 
+                    }
+                }
+            } catch(err) { 
+                showToast("Error", true); 
+            } finally { 
+                resetBtn(btn, old); 
+            }
+        }
+
+        function processLogout() {
+            loggedBoarderId = ""; loggedBoarderName = ""; loggedBoarderPin = "";
+            isManagerLogged = false; managerPin = ""; isDirectorLogged = false; directorPin = "";
+            
+            localStorage.removeItem('b_id'); localStorage.removeItem('b_name'); localStorage.removeItem('b_pin');
+            localStorage.removeItem('mgr_logged'); localStorage.removeItem('mgr_pin');
+            localStorage.removeItem('dir_logged'); localStorage.removeItem('dir_pin');
+            
+            closeLoginMenu(); 
+            renderUI(windowAppData); 
+            // Manager/Director tab-এ থাকলে home-এ ফিরে যাবে
+            let activeTab = document.querySelector('.tab-content.active');
+            if(activeTab && (activeTab.id === 'tab_manager' || activeTab.id === 'tab_director')) {
+                switchMainTab('home');
+            }
+            showToast("লগআউট সফল হয়েছে!");
+        }
+
+        async function forgotPasswordFlow(e) {
+            let bId = document.getElementById('rl_b_name').value;
+            if(!bId) return showToast("আগে উপরে আপনার নাম সিলেক্ট করুন!", true);
+            
+            let btn = e ? e.currentTarget : null; 
+            let old = setBtnLoading(btn);
+            
+            try { 
+                let res = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({mess_id: currentMessId, action: "FORGET_PASSWORD_EMAIL", boarder_id: bId})}); 
+                showToast(await res.text()); 
+            } catch(err) { 
+                showToast("Error", true); 
+            } finally { 
+                resetBtn(btn, old); 
+            }
+        }
+
+        // ==========================================
+        // DATA FETCH & RENDER 
+        // ==========================================
+        function loadMainApp() {
+            // [FIX-LMA] mainAppWrapper দেখাও, তারপর data fetch করো
+            document.getElementById('mainAppWrapper').classList.remove('hidden');
+            document.getElementById('activeMessName').innerText = currentMessName;
+            // splashScreen এখানেও hide করো (enterMess এ already করা, কিন্তু direct load এর জন্যও দরকার)
+            let spEl = document.getElementById('splashScreen');
+            if(spEl && !spEl.classList.contains('hidden')) {
+                spEl.style.opacity = '0';
+                setTimeout(() => spEl.classList.add('hidden'), 400);
+            }
+            // messSelectionScreen hide করো
+            let mss = document.getElementById('messSelectionScreen');
+            if(mss) { mss.classList.remove('flex'); mss.classList.add('hidden'); }
+            switchMainTab('home'); 
+            fetchFreshData();
+        }
+
+        // Cache Busting যুক্ত করা হয়েছে
+        async function fetchFreshData() {
+            document.getElementById('refreshIcon').classList.add('fa-spin');
+            try {
+                const res = await fetch(`${SCRIPT_URL}?action=get_initial_data&mess_id=${currentMessId}&_t=${new Date().getTime()}`);
+                const data = await res.json();
+                
+                if(data.error) { 
+                    showToast(data.error, true); 
+                    if(data.error.includes("not found")) logoutMess(); 
+                    return; 
+                }
+                
+                windowAppData = data; 
+                renderUI(data);
+                document.getElementById('offlineBadge').classList.add('hidden');
+            } catch(e) { 
+                document.getElementById('offlineBadge').classList.remove('hidden'); 
+            } finally {
+                document.getElementById('refreshIcon').classList.remove('fa-spin');
+                let sp = document.getElementById('splashScreen'); 
+                if(sp) { 
+                    sp.style.opacity = '0'; 
+                    setTimeout(() => sp.classList.add('hidden'), 500); 
+                }
+            }
+        }
+
+        function renderUI(data) {
+            if(!data || !data.settings) return;
+            
+            document.getElementById('mgrName').innerText = escapeHTML(data.settings[1][0]);
+            let notice = data.settings[1][2];
+            
+            if(notice) { 
+                document.getElementById('noticeText').innerText = escapeHTML(notice); 
+                document.getElementById('noticeCard').classList.remove('hidden'); 
+            } else { 
+                document.getElementById('noticeCard').classList.add('hidden'); 
+            }
+
+            let authBtn = document.getElementById('topAuthBtn');
+            if(isManagerLogged || isDirectorLogged || loggedBoarderId) {
+                authBtn.innerHTML = '<i class="fas fa-user-check"></i> প্রোফাইল'; 
+                authBtn.classList.replace('bg-primary', 'bg-indigo-500');
+            } else {
+                authBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> লগইন'; 
+                authBtn.classList.replace('bg-indigo-500', 'bg-primary');
+            }
+
+            // Tabs UI based on Auth
+            if(isManagerLogged) { 
+                document.getElementById('mgrLockScreen').classList.add('hidden'); 
+                document.getElementById('mgrContent').classList.remove('hidden'); 
+            } else { 
+                document.getElementById('mgrLockScreen').classList.remove('hidden'); 
+                document.getElementById('mgrContent').classList.add('hidden'); 
+            }
+            
+            if(isDirectorLogged) { 
+                document.getElementById('dirLockScreen').classList.add('hidden'); 
+                document.getElementById('dirContent').classList.remove('hidden'); 
+            } else { 
+                document.getElementById('dirLockScreen').classList.remove('hidden'); 
+                document.getElementById('dirContent').classList.add('hidden'); 
+            }
+
+            let dData = data.deposits.slice(1).filter(r => isCurrentMonth(r[1])); 
+            let mData = data.meals.slice(1).filter(r => isCurrentMonth(r[1])); 
+            let tData = data.transactions.slice(1).filter(r => isCurrentMonth(r[1])); 
+            let breakfastRate = Number(data.settings[1][5]) || 0; // per-meal rate টাকায় (display ও calculation এর জন্য)
+            
+            let td = dData.reduce((s, r) => s + Number(r[4] || 0), 0);
+            let te = tData.reduce((s, r) => s + Number(r[4] || 0), 0);
+            // [FIX-8] Backend guide অনুযায়ী: breakfast stored as 0/0.5/1 (weight), lunch/dinner = 0/1
+            // totalWeightedMeals = Σ(bf_weight + lunch + dinner)
+            let totalMeals = mData.reduce((s, r) => s + Number(r[4]||0) + Number(r[5]||0) + Number(r[6]||0), 0);
+            let rawMr = Number(totalMeals > 0 ? (te / totalMeals) : 0);
+
+            document.getElementById('totalDep').innerText = "৳ " + td.toFixed(0);
+            document.getElementById('totalExp').innerText = "৳ " + te.toFixed(0);
+            document.getElementById('mRate').innerText = "৳ " + rawMr.toFixed(2);
+            document.getElementById('totalM').innerText = totalMeals.toFixed(1) + " টি";
+            document.getElementById('bal').innerText = "৳ " + (td - te).toFixed(0);
+            document.getElementById('budgetBar').style.width = (td > 0 ? (te / td) * 100 : 0) + "%";
+            document.getElementById('budgetPercent').innerText = (td > 0 ? ((te / td) * 100).toFixed(0) : 0) + "% ব্যবহৃত";
+
+            // [FIX-2] globalBreakfast (settings[1][7]) = 0/0.5/1 — breakfast show/hide control
+            // breakfastRate (settings[1][5]) = per-meal rate টাকায়, calculation এর জন্য
+            let globalBreakfast = parseFloat(data.settings[1][7]);
+            if(isNaN(globalBreakfast)) globalBreakfast = 1; // default on
+            
+            let tl=0, tdn=0;
+            let boarderCards = data.boarders.slice(1).map(b => {
+                let bId = String(b[0]).trim(); 
+                let bName = String(b[1] || "Unknown").trim();
+                let b_st = b[3], l_st = b[4], d_st = b[5];
+                
+                if(l_st == "ON") tl++; 
+                if(d_st == "ON") tdn++;
+                
+                let dep = dData.filter(d => String(d[2]).trim() === bId).reduce((s, r) => s + Number(r[4]), 0);
+                // [FIX-9] breakfast already stored as 0/0.5/1 weight — no separate multiplier needed
+                let meals = mData.filter(m => String(m[2]).trim() === bId).reduce((s, m) => s + Number(m[4]||0) + Number(m[5]||0) + Number(m[6]||0), 0);
+                let bal = dep - (meals * rawMr);
+                let color = bal >= 0 ? 'border-green-500' : 'border-red-500';
+                
+                let isMe = (bId === loggedBoarderId); 
+                let btnState = isMe ? "" : "opacity-50 pointer-events-none";
+
+                return `
+                <div class="glass p-4 rounded-3xl shadow-sm border-l-4 ${color} b-card mb-3" data-name="${escapeHTML(bName.toUpperCase())}">
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-full ${getAvatarColor(bName)} text-white flex items-center justify-center text-xs font-bold">${escapeHTML(bName.charAt(0))}</div>
+                            <h4 class="font-bold text-sm">${escapeHTML(bName)} ${isMe ? '<span class="text-[8px] bg-indigo-100 text-indigo-700 px-1 rounded ml-1">আপনি</span>' : ''}</h4>
+                        </div>
+                        <div class="flex gap-1 ${btnState}">
+                            ${globalBreakfast > 0 ? `<button onclick="toggleMeal('${bId}', 'breakfast', '${b_st=="ON"?"OFF":"ON"}')" class="w-8 h-6 rounded-lg text-[9px] font-bold text-white shadow-sm ${b_st=="ON"?"bg-orange-500":"bg-gray-400"}">B</button>` : ''}
+                            <button onclick="toggleMeal('${bId}', 'lunch', '${l_st=="ON"?"OFF":"ON"}')" class="w-8 h-6 rounded-lg text-[9px] font-bold text-white shadow-sm ${l_st=="ON"?"bg-teal-500":"bg-gray-400"}">L</button>
+                            <button onclick="toggleMeal('${bId}', 'dinner', '${d_st=="ON"?"OFF":"ON"}')" class="w-8 h-6 rounded-lg text-[9px] font-bold text-white shadow-sm ${d_st=="ON"?"bg-indigo-500":"bg-gray-400"}">D</button>
+                        </div>
+                    </div>
+                    <div class="flex justify-between text-[10px] font-bold opacity-60">
+                        <span>জমা: ৳${dep}</span>
+                        <span class="${bal < 0 ? 'text-red-500' : 'text-green-600'}">ব্যালেন্স: ৳${bal.toFixed(0)}</span>
+                    </div>
+                </div>`;
+            }).join('');
+
+            document.getElementById('todayLunch').innerText = tl; 
+            document.getElementById('todayDinner').innerText = tdn;
+            
+            // [FIX-2b] সকালের মিল count ও grid toggle — globalBreakfast (0/0.5/1) দিয়ে control
+            let tb = 0;
+            data.boarders.slice(1).forEach(b => { if(String(b[3]) === "ON") tb++; });
+            document.getElementById('todayBreakfast').innerText = tb;
+            let bBox = document.getElementById('breakfastBox');
+            let mgGrid = document.getElementById('mealSummaryGrid');
+            if(globalBreakfast > 0) {
+                bBox.classList.remove('hidden');
+                mgGrid.classList.remove('grid-cols-2');
+                mgGrid.classList.add('grid-cols-3');
+            } else {
+                bBox.classList.add('hidden');
+                mgGrid.classList.add('grid-cols-2');
+                mgGrid.classList.remove('grid-cols-3');
+            }
+            document.getElementById('boarderList').innerHTML = boarderCards;
+            
+            document.getElementById('expBody').innerHTML = tData.slice().reverse().map(t => { let d=parseSheetDate(t[1]); let dStr=d?d.toLocaleDateString('bn-BD',{day:'numeric',month:'short'}):String(t[1]).substring(0,10); return `<tr class="border-b dark:border-slate-800"><td class="p-2"><div class="text-[10px] text-gray-400">${dStr}</div><span class="font-bold">${escapeHTML(t[3])}</span> ${t[2]?'<span class="text-[9px] bg-blue-50 dark:bg-blue-900/30 text-blue-600 px-1.5 py-0.5 rounded ml-1">'+escapeHTML(String(t[2]))+'</span>':''} ${t[5]?'<i class="fas fa-info-circle text-[8px] text-amber-500"></i>':''}</td><td class="p-2 text-right font-bold text-red-500 whitespace-nowrap">৳${t[4]}</td></tr>`; }).join('');
+            // [FIX-DEP] parseSheetDate ব্যবহার করে timezone issue এড়ানো
+            // FINE entries আলাদা রঙে দেখাবে
+            document.getElementById('depBody').innerHTML = dData.slice().reverse().map(t => {
+                let depD = parseSheetDate(t[1]);
+                let dStr2 = depD ? depD.toLocaleDateString('bn-BD', {day:'numeric', month:'short'}) : String(t[1]).substring(0,10);
+                let isFine = String(t[5]).trim() === "FINE";
+                let amtColor = isFine ? 'text-red-500' : 'text-green-500';
+                let amtStr = isFine ? '-৳'+Math.abs(Number(t[4])) : '৳'+t[4];
+                let typeBadge = isFine ? '<span class="text-[8px] bg-red-100 text-red-500 px-1 py-0.5 rounded ml-1">জরিমানা</span>' : '';
+                return `<tr class="border-b dark:border-slate-800"><td class="p-2"><div class="text-[10px] text-gray-400">${dStr2}</div>${escapeHTML(t[3])}${typeBadge} ${t[6]?'<i class="fas fa-info-circle text-[8px] text-amber-500" title="'+escapeHTML(t[6])+'"></i>':''}</td><td class="p-2 text-right font-bold ${amtColor}">${amtStr}</td></tr>`;
+            }).join('');
+            
+            initChart();
+
+            // [FIX-3b] আজকের বাজারকারীর card populate করা
+            let assignedBazaarName = data.settings[1][3] || "";
+            let assignedBazaarDates = data.settings[1][4] || "";
+            let bazaarCard = document.getElementById('bazaarPersonCard');
+            if(assignedBazaarName && bazaarCard) {
+                // আজকের বাজারের মোট হিসাব
+                let todayDateStr = new Date().toDateString();
+                let todayBazaarTotal = data.transactions.slice(1).filter(r => {
+                    let d2 = parseSheetDate(r[1]);
+                    return d2 && d2.toDateString() === todayDateStr;
+                }).reduce((s, r) => s + Number(r[4] || 0), 0);
+                
+                document.getElementById('bazaarPersonName').innerText = assignedBazaarName;
+                document.getElementById('bazaarPersonDate').innerText = assignedBazaarDates ? assignedBazaarDates : "";
+                document.getElementById('todayBazaarTotal').innerText = "৳ " + todayBazaarTotal.toFixed(0);
+                bazaarCard.classList.remove('hidden');
+            } else if(bazaarCard) {
+                bazaarCard.classList.add('hidden');
+            }
+
+            let archData = data.archives || []; 
+            if(archData.length > 0 && archData[0][0].toLowerCase().includes('month')) archData = archData.slice(1);
+            
+            if(archData.length > 0) { 
+                document.getElementById('archiveList').innerHTML = archData.map(a => `
+                    <div onclick="window.open('${a[1]}', '_blank')" class="flex items-center justify-between bg-indigo-50 dark:bg-indigo-900/30 p-3 rounded-2xl cursor-pointer mb-2">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center text-white"><i class="fas fa-file-pdf"></i></div>
+                            <div>
+                                <p class="text-xs font-bold">${escapeHTML(a[0])}</p>
+                                <p class="text-[9px] text-gray-500 uppercase">মাসিক রিপোর্ট</p>
+                            </div>
+                        </div>
+                        <i class="fas fa-external-link-alt text-indigo-400"></i>
+                    </div>`).join(''); 
+            }
+
+            let pbData = data.pendingBazaar.slice(1); 
+            document.getElementById('pendingCount').innerText = pbData.length;
+            
+            if(pbData.length > 0) {
+                document.getElementById('pendingBazaarList').innerHTML = pbData.map(p => `
+                    <div class="flex justify-between items-center bg-orange-50 dark:bg-orange-900/10 p-2 rounded-xl mb-2">
+                        <div>
+                            <p class="text-xs font-bold">${escapeHTML(p[3])} <span class="text-gray-400 font-normal">— ${escapeHTML(p[4])}</span></p>
+                            <p class="text-[10px] text-orange-600 font-bold">৳${p[5]}</p>
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <button onclick="mgrActionBazaar('${String(p[0]).trim()}', 'APPROVE_BAZAAR', event)" class="bg-green-500 text-white text-[9px] px-2 py-1 rounded-lg font-bold">✓ অনুমোদন</button>
+                            <button onclick="mgrActionBazaar('${String(p[0]).trim()}', 'REJECT_BAZAAR', event)" class="bg-red-400 text-white text-[9px] px-2 py-1 rounded-lg font-bold">✗ বাতিল</button>
+                        </div>
+                    </div>`).join('');
+            } else { 
+                document.getElementById('pendingBazaarList').innerHTML = '<p class="text-xs text-gray-400 text-center py-2">কোনো পেন্ডিং বাজার নেই</p>'; 
+            }
+
+            // ==========================================
+            // DIRECTOR LOGIC (Calculations & UI)
+            // ==========================================
+            // [FIX-4] data.director_bills এবং data.director_payments correct key
+            // (old buggy code used director_expenses / director_deposits)
+            if(data.director_bills || data.director_payments) {
+                let dirBills = data.director_bills || [[]];
+                let dirPayments = data.director_payments || [[]];
+                let dExp = dirBills.slice(1).filter(r => isCurrentMonth(r[1])); // Current month bills
+                let dDep = dirPayments.slice(1).filter(r => isCurrentMonth(r[1])); // Current month payments
+                let activeBoardersCount = data.boarders.slice(1).length;
+                
+                // [FIX-4a] eligible boarders (Fixed_Bill_Status = "ON")
+                let eligibleBoarders = data.boarders.slice(1).filter(b => String(b[9] || "ON").trim() === "ON");
+                let eligibleCount = eligibleBoarders.length || activeBoardersCount;
+                
+                let expHtml = "";
+                // [FIX-4b] শুধু current month bills দেখাবে
+                let totalDirExpense = dExp.reduce((s, b) => s + Number(b[3]||0), 0);
+                dExp.forEach(b => { 
+                    expHtml += `<span class="bg-white dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm border border-emerald-100 dark:border-emerald-700"><i class="fas fa-receipt text-[8px] mr-1 opacity-60"></i>${escapeHTML(String(b[2]))}: ৳${b[3]}</span>`;
+                });
+                
+                document.getElementById('dirPublicBillsList').innerHTML = expHtml || '<span class="text-xs text-gray-400">কোনো বিল অ্যাড করা হয়নি।</span>';
+                
+                // [FIX-4b] eligibleCount দিয়ে divide — director fixed bill শুধু eligible boarders এর মাঝে ভাগ হয়
+                let dirPerPersonCost = eligibleCount > 0 ? Math.round(totalDirExpense / eligibleCount) : 0;
+                let totalDirCollected = dDep.reduce((s, r) => s + Number(r[4]||0), 0);
+                
+                // Update Public Box
+                document.getElementById('dirPubPerPerson').innerText = "৳ " + dirPerPersonCost;
+                document.getElementById('dirPubTotalCost').innerText = "৳ " + totalDirExpense;
+                
+                // Update Modal Public Info
+                document.getElementById('modalDirPerPersonCost').innerText = "৳ " + dirPerPersonCost;
+                
+                // Update Private Director Box
+                document.getElementById('dirPrivCollected').innerText = "৳ " + totalDirCollected;
+                document.getElementById('dirPrivExpense').innerText = "৳ " + totalDirExpense;
+                
+                // [FIX-2c] সকালের মিল রেট display — globalBreakfast (settings[1][7]) = 0/0.5/1
+                let gbVal = parseFloat(data.settings?.[1]?.[7]);
+                if(isNaN(gbVal)) gbVal = 1;
+                let bRate = Number(data.settings?.[1]?.[5]) || 0;
+                let bRateEl = document.getElementById('breakfastRateDisplay');
+                let bBadgeEl = document.getElementById('breakfastStatusBadge');
+                let gbLabel = gbVal === 0 ? 'বন্ধ' : (gbVal === 0.5 ? 'হাফ মিল' : 'পুরো মিল');
+                if(bRateEl) bRateEl.innerText = gbVal > 0 ? 'রেট: ৳' + bRate + ' (প্রতি মিল) — ' + gbLabel : 'সকালের মিল বন্ধ আছে';
+                if(bBadgeEl) { 
+                    bBadgeEl.innerText = gbVal > 0 ? gbLabel : 'OFF';
+                    bBadgeEl.className = gbVal > 0 ? 'text-[9px] font-bold px-2 py-1 rounded-full bg-orange-100 text-orange-600' : 'text-[9px] font-bold px-2 py-1 rounded-full bg-gray-200 text-gray-500';
+                }
+                
+                // Due/Advance List (Public Modal)
+                // [FIX-4c] due list — eligible boarders এর জন্য due, ineligible দের জন্য "Fixed Bill নেই"
+                let dueHtml = "";
+                data.boarders.slice(1).forEach(b => {
+                    let bId = String(b[0]).trim();
+                    let fbStatus = String(b[9] || "ON").trim();
+                    let bDepositToDir = dDep.filter(x => String(x[2]).trim() === bId).reduce((s,x)=>s+Number(x[4]||0), 0);
+                    
+                    let billForThisBoarder = fbStatus === "ON" ? dirPerPersonCost : 0;
+                    let dirBalance = bDepositToDir - billForThisBoarder; 
+                    let textColor = dirBalance < 0 ? 'text-red-500' : 'text-emerald-500';
+                    let label = dirBalance < 0 ? 'বকেয়া: ' : 'অ্যাডভান্স: ';
+                    
+                    if (dirBalance === 0) { 
+                        label = 'ক্লিয়ার: '; 
+                        textColor = 'text-gray-500'; 
+                    }
+                    let statusBadge = fbStatus !== "ON" ? '<span class="text-[8px] bg-gray-100 dark:bg-slate-700 text-gray-400 px-1.5 py-0.5 rounded ml-1">Fixed Bill OFF</span>' : '';
+
+                    dueHtml += `
+                        <div class="flex justify-between py-3 border-b dark:border-slate-700 last:border-0 items-center px-2">
+                            <span class="text-sm font-bold text-gray-700 dark:text-gray-300"><i class="fas fa-user text-gray-400 mr-2"></i>${escapeHTML(b[1])}${statusBadge}</span>
+                            <span class="text-sm font-bold bg-gray-50 dark:bg-slate-800 px-3 py-1 rounded-lg ${textColor}">${label}৳${Math.abs(dirBalance)}</span>
+                        </div>`;
+                });
+                document.getElementById('dirPubDueList').innerHTML = dueHtml || '<p class="text-gray-400 text-center py-3">কোনো বর্ডার নেই</p>';
+
+                // Director Audit (Notes)
+                let auditHtml = "";
+                dExp.slice().reverse().forEach(b => { 
+                    if(b[4]) auditHtml += `<p class="border-b dark:border-slate-700 pb-1 mb-1"><span class="text-red-500 font-bold">[Expense]</span> ${escapeHTML(String(b[4]))}</p>`; 
+                });
+                dDep.slice().reverse().forEach(p => { 
+                    if(p[5]) auditHtml += `<p class="border-b dark:border-slate-700 pb-1 mb-1"><span class="text-green-500 font-bold">[Deposit]</span> ${escapeHTML(String(p[5]))}</p>`; 
+                });
+                document.getElementById('dirAuditList').innerHTML = auditHtml || "<p class='text-gray-500 text-center py-2'>কোনো এডিট হিস্ট্রি নেই।</p>";
+            }
+        }
+
+        async function toggleMeal(id, type, status) {
+            let pin = await askForPin(`মিল ${status=='ON'?'চালু':'বন্ধ'} করতে পিন দিন:`); 
+            if(!pin) return;
+            
+            showToast("আপডেট হচ্ছে...", false);
+            try { 
+                let res = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({mess_id: currentMessId, action: "TOGGLE_MEAL", boarder_id: id, type: type, status: status, boarder_pin: pin})}); 
+                showToast(await res.text()); 
+                fetchFreshData(); 
+            } catch(e) { 
+                showToast("Error", true); 
+            }
+        }
+
+        function switchMainTab(t) {
+            if(t === 'boarders' && !loggedBoarderId && !isManagerLogged && !isDirectorLogged) { 
+                pendingLoginAction = 'boarders'; 
+                return showRoleLogin('boarder'); 
+            }
+            
+            ['home', 'trans', 'boarders', 'archive', 'manager', 'director'].forEach(x => { 
+                let tb = document.getElementById('tab_' + x); 
+                let nv = document.getElementById('nav_' + x);
+                if(tb) tb.classList.remove('active'); 
+                if(nv) nv.classList.replace('nav-active', 'opacity-50'); 
+            });
+            
+            document.getElementById('tab_' + t).classList.add('active'); 
+            if(document.getElementById('nav_' + t)) document.getElementById('nav_' + t).classList.replace('opacity-50', 'nav-active');
+        }
+
+        function subTab(t) {
+            document.getElementById('st1').classList.add('hidden'); 
+            document.getElementById('st2').classList.add('hidden');
+            document.getElementById(t).classList.remove('hidden');
+            
+            ['btn_st1','btn_st2'].forEach(i => { 
+                let btn = document.getElementById(i); 
+                btn.classList.remove('text-primary', 'border-b-2', 'font-bold'); 
+                btn.classList.add('text-gray-500'); 
+            });
+            
+            let activeBtn = document.getElementById('btn_' + t); 
+            activeBtn.classList.remove('text-gray-500'); 
+            activeBtn.classList.add('text-primary', 'border-b-2', 'font-bold');
+        }
+
+        function searchBoarderList() {
+            let input = document.getElementById("searchB"); 
+            if(!input) return; 
+            let val = input.value.toUpperCase();
+            
+            document.querySelectorAll(".b-card").forEach(c => { 
+                c.style.display = (c.getAttribute("data-name") || "").includes(val) ? "" : "none"; 
+            });
+        }
+
+        // ==========================================
+        // ACTION MODALS & API
+        // ==========================================
+        let currentAct = "";
+        function showAction(a) {
+            currentAct = a; 
+            openM('modal');
+            let bOpt = windowAppData.boarders.slice(1).map(b => `<option value="${escapeHTML(String(b[0]).trim())}" class="text-gray-900 bg-white font-bold">${escapeHTML(String(b[1]).trim())}</option>`).join('');
+            let i = "";
+            
+            // Manager Actions
+            if(a == 'ADD_DEPOSIT') i = `<p class="text-[10px] font-bold text-gray-400 uppercase mb-1">কার জমা?</p><select id="i_d_id" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 mb-3 text-gray-900 dark:text-white">${bOpt}</select><p class="text-[10px] font-bold text-gray-400 uppercase mb-1">জমার তারিখ</p><input id="i_d_date" type="date" value="${new Date().toLocaleDateString('en-CA')}" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 mb-3 text-gray-900 dark:text-white"><input id="i_d_amt" type="number" inputmode="numeric" placeholder="টাকার পরিমাণ (৳)" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white">`;
+            if(a == 'ADD_TRANSACTION') i = `<p class="text-[10px] font-bold text-gray-400 uppercase mb-1">বাজারকারীর নাম</p><select id="i_t_buyer" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 mb-3 text-gray-900 dark:text-white">${bOpt}</select><p class="text-[10px] font-bold text-gray-400 uppercase mb-1">বাজারের তারিখ</p><input id="i_t_date" type="date" value="${new Date().toLocaleDateString('en-CA')}" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 mb-3 text-gray-900 dark:text-white"><input id="i_t_item" placeholder="কী বাজার আনা হয়েছে?" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 mb-2 text-gray-900 dark:text-white"><input id="i_t_cost" type="number" inputmode="numeric" placeholder="মোট খরচ (৳)" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white">`;
+            // [FIX-7] MANAGER_EDIT_MEAL — globalBreakfast > 0 হলে breakfast option যুক্ত
+            if(a == 'MANAGER_EDIT_MEAL') { 
+                let gbv = parseFloat(windowAppData?.settings?.[1]?.[7]); 
+                if(isNaN(gbv)) gbv = 1;
+                let bfOption = gbv > 0 ? `<option value="breakfast" class="text-gray-900 bg-white">সকালের মিল</option>` : '';
+                i = `<p class="text-[10px] font-bold text-gray-400 uppercase mb-1">কোন তারিখের মিল?</p><input id="i_mem_date" type="date" value="${new Date().toLocaleDateString('en-CA')}" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 mb-3 text-gray-900 dark:text-white"><select id="i_mem_id" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 mb-2 text-gray-900 dark:text-white">${bOpt}</select><select id="i_mem_type" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 mb-2 text-gray-900 dark:text-white">${bfOption}<option value="lunch" class="text-gray-900 bg-white">দুপুরের মিল</option><option value="dinner" class="text-gray-900 bg-white">রাতের মিল</option></select><input id="i_mem_count" type="number" step="0.5" min="0" max="1" placeholder="মিল সংখ্যা (0 বা 1, breakfast: 0/0.5/1)" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 font-bold text-gray-900 dark:text-white">`; 
+            }
+            if(a == 'EDIT_BAZAAR') { let txOpt = windowAppData.transactions.slice(1).map((r,idx) => `<option value="${r[0]}" class="text-gray-900 bg-white font-bold">${r[3]} — ৳${r[4]}</option>`).join(''); i = `<select id="i_eb_id" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 mb-3 text-xs text-gray-900 dark:text-white">${txOpt}</select><input id="i_eb_item" placeholder="নতুন বিবরণ / আইটেম" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 mb-2 text-gray-900 dark:text-white"><input id="i_eb_cost" type="number" placeholder="নতুন খরচ (৳)" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white">`; }
+            if(a == 'DELETE_BAZAAR') { let txOpt = windowAppData.transactions.slice(1).map((r,idx) => `<option value="${r[0]}" class="text-gray-900 bg-white font-bold">${r[3]} — ৳${r[4]}</option>`).join(''); i = `<p class="text-xs text-red-500 font-bold mb-2">⚠️ এই খরচটি স্থায়ীভাবে মুছে যাবে!</p><select id="i_db_id" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 text-xs text-gray-900 dark:text-white">${txOpt}</select>`; }
+            if(a == 'EDIT_DEPOSIT') { let depOpt = windowAppData.deposits.slice(1).map((r,idx) => `<option value="${r[0]}" class="text-gray-900 bg-white font-bold">${r[3]} — ৳${r[4]}</option>`).join(''); i = `<select id="i_ed_id" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 mb-3 text-xs text-gray-900 dark:text-white">${depOpt}</select><input id="i_ed_amt" type="number" placeholder="নতুন জমার পরিমাণ (৳)" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white">`; }
+            if(a == 'ADD_FINE') i = `<select id="i_f_id" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 mb-2 text-gray-900 dark:text-white">${bOpt}</select><input id="i_f_amt" type="number" placeholder="জরিমানার পরিমাণ (৳)" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 mb-2 text-gray-900 dark:text-white"><input id="i_f_rsn" placeholder="কারণ" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white">`;
+            if(a == 'ASSIGN_BAZAAR') i = `<p class="text-[10px] font-bold text-gray-400 uppercase mb-1">কাকে দায়িত্ব দেবেন?</p><select id="i_ab_id" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 mb-3 text-gray-900 dark:text-white">${bOpt}</select><p class="text-[10px] font-bold text-gray-400 uppercase mb-1">কোন তারিখ থেকে?</p><input id="i_ab_date_from" type="date" value="${new Date().toLocaleDateString('en-CA')}" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 mb-2 text-gray-900 dark:text-white"><p class="text-[10px] font-bold text-gray-400 uppercase mb-1">কোন তারিখ পর্যন্ত?</p><input id="i_ab_date_to" type="date" value="${new Date().toLocaleDateString('en-CA')}" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white">`;
+            if(a == 'UPDATE_NOTICE') i = `<textarea id="i_un_text" placeholder="নোটিশ লিখুন" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white" rows="3"></textarea>`;
+            if(a == 'CHANGE_MANAGER_PIN') i = `<input id="i_cmp_pin" type="password" placeholder="নতুন ম্যানেজার পিন" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white">`;
+            
+            // Director Actions Fixed Payload Fields
+            if(a == 'DIRECTOR_ADD_BOARDER') i = `<input id="i_d_nb_name" placeholder="বর্ডারের নাম" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 mb-2 text-gray-900 dark:text-white"><input id="i_d_nb_phone" type="number" placeholder="ফোন নম্বর" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white">`;
+            if(a == 'DIRECTOR_DELETE_BOARDER') i = `<p class="text-xs text-red-500 font-bold mb-2">⚠️ সাবধানে ডিলিট করুন!</p><select id="i_d_dbdr_id" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white">${bOpt}</select>`;
+            if(a == 'DIRECTOR_EDIT_BOARDER') i = `<select id="i_d_eb_id" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 mb-2 text-gray-900 dark:text-white">${bOpt}</select><input id="i_d_eb_name" placeholder="নতুন নাম" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 mb-2 text-gray-900 dark:text-white"><input id="i_d_eb_phone" type="number" placeholder="নতুন ফোন" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white">`;
+            
+            if(a == 'ADD_FIXED_BILL') {
+                 i = `<p class="text-[10px] uppercase font-bold text-gray-400 mb-1">কীসের ফিক্সড বিল?</p>
+                 <select id="i_df_item" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 mb-2 font-bold text-gray-900 dark:text-white">
+                     <option value="খালার বিল" class="text-gray-900 bg-white">খালার বিল</option>
+                     <option value="কারেন্ট বিল" class="text-gray-900 bg-white">কারেন্ট বিল</option>
+                     <option value="গ্যাস বিল" class="text-gray-900 bg-white">গ্যাস বিল</option>
+                     <option value="পানির বিল" class="text-gray-900 bg-white">পানির বিল</option>
+                     <option value="ওয়াইফাই বিল" class="text-gray-900 bg-white">ওয়াইফাই বিল</option>
+                     <option value="অন্যান্য" class="text-gray-900 bg-white">অন্যান্য</option>
+                 </select>
+                 <input id="i_df_amt" type="number" placeholder="মোট বিলের পরিমাণ (৳) (সবার মাঝে ভাগ হবে)" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 font-bold text-gray-900 dark:text-white">`;
+            }
+            if(a == 'COLLECT_BILL') i = `<p class="text-[10px] uppercase font-bold text-gray-400 mb-1">কার থেকে জমা নিচ্ছেন?</p><select id="i_dc_id" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 mb-3 text-gray-900 dark:text-white">${bOpt}</select><p class="text-[10px] uppercase font-bold text-gray-400 mb-1">জমার তারিখ</p><input id="i_dc_date" type="date" value="${new Date().toLocaleDateString('en-CA')}" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 mb-3 text-gray-900 dark:text-white"><input id="i_dc_amt" type="number" inputmode="numeric" placeholder="জমা নেওয়া টাকার পরিমাণ (৳)" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 font-bold text-gray-900 dark:text-white">`;
+            
+            // [FIX-5] director_bills ও director_payments correct key
+            if(a == 'EDIT_DIRECTOR_BILL') { let eOpt = (windowAppData.director_bills||[[]]).slice(1).map(r => `<option value="${r[0]}" class="text-gray-900 bg-white font-bold">${escapeHTML(String(r[2]))} - ৳${r[3]}</option>`).join(''); i = `<select id="i_ede_id" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 mb-2 text-xs text-gray-900 dark:text-white">${eOpt}</select><input id="i_ede_item" placeholder="নতুন নাম (ঐচ্ছিক)" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 mb-2 text-gray-900 dark:text-white"><input id="i_ede_amt" type="number" placeholder="নতুন মোট পরিমাণ (৳)" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white">`; }
+            if(a == 'DELETE_DIRECTOR_BILL') { let eOpt = (windowAppData.director_bills||[[]]).slice(1).map(r => `<option value="${r[0]}" class="text-gray-900 bg-white font-bold">${escapeHTML(String(r[2]))} - ৳${r[3]}</option>`).join(''); i = `<select id="i_dde_id" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 text-xs text-gray-900 dark:text-white">${eOpt}</select>`; }
+            
+            if(a == 'EDIT_DIRECTOR_PAYMENT') { let pOptF = (windowAppData.director_payments||[[]]).slice(1).map(r => `<option value="${r[0]}" class="text-gray-900 bg-white font-bold">${escapeHTML(String(r[3]))} - ৳${r[4]}</option>`).join(''); i = `<select id="i_edp_id" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 mb-2 text-xs text-gray-900 dark:text-white">${pOptF}</select><input id="i_edp_amt" type="number" placeholder="নতুন পরিমাণ (৳)" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white">`; }
+            if(a == 'DELETE_DIRECTOR_PAYMENT') { let pOptF = (windowAppData.director_payments||[[]]).slice(1).map(r => `<option value="${r[0]}" class="text-gray-900 bg-white font-bold">${escapeHTML(String(r[3]))} - ৳${r[4]}</option>`).join(''); i = `<select id="i_ddp_id" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 text-xs text-gray-900 dark:text-white">${pOptF}</select>`; }
+            
+            // New Features
+            // [FIX-5c] SET_BREAKFAST_RATE — 0/0.5/1 option দেখাবে (backend SET_GLOBAL_BREAKFAST)
+            if(a == 'SET_BREAKFAST_RATE') { 
+                let curGB = parseFloat(windowAppData?.settings?.[1]?.[7]);
+                if(isNaN(curGB)) curGB = 1;
+                let bRate = Number(windowAppData?.settings?.[1]?.[5]) || 0;
+                let gbLabel = curGB === 0 ? 'বন্ধ' : (curGB === 0.5 ? 'হাফ মিল (0.5)' : 'পুরো মিল (1)');
+                i = `<p class="text-xs text-gray-500 mb-3">সকালের মিলের ধরন সেট করুন। মিল রেট (৳${bRate}) আলাদাভাবে হিসাব হয়।</p>
+                <p class="text-[10px] font-bold text-gray-400 uppercase mb-2">বর্তমান সেটিং: ${gbLabel}</p>
+                <select id="i_br_rate" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 font-bold text-gray-900 dark:text-white">
+                    <option value="0" ${curGB===0?'selected':''} class="text-gray-900 bg-white">০ — সকালের মিল সম্পূর্ণ বন্ধ</option>
+                    <option value="0.5" ${curGB===0.5?'selected':''} class="text-gray-900 bg-white">০.৫ — হাফ মিল (Half Rate)</option>
+                    <option value="1" ${curGB===1?'selected':''} class="text-gray-900 bg-white">১ — পুরো মিল (Full Rate)</option>
+                </select>`;
+            }
+            if(a == 'CHANGE_MANAGER') i = `<input id="i_cm_name" placeholder="নতুন ম্যানেজারের নাম" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 mb-2 text-gray-900 dark:text-white"><input id="i_cm_pin" type="password" placeholder="নতুন ম্যানেজারের পিন" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white">`;
+            if(a == 'CHANGE_DIRECTOR') i = `<input id="i_cd_pin" type="password" placeholder="নতুন পরিচালকের পিন" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white">`;
+
+            document.getElementById('mInputs').innerHTML = i;
+            let t = {
+                'ADD_DEPOSIT':'টাকা জমা করুন','ADD_TRANSACTION':'খরচ যোগ করুন','MANAGER_EDIT_MEAL':'মিল স্ট্যাটাস পরিবর্তন','EDIT_BAZAAR':'বাজার এডিট করুন','DELETE_BAZAAR':'বাজার ডিলিট করুন','ADD_FINE':'জরিমানা যুক্ত করুন', 'UPDATE_NOTICE':'নোটিশ আপডেট', 'ASSIGN_BAZAAR':'বাজারের দায়িত্ব', 'EDIT_DEPOSIT':'জমা এডিট', 'CHANGE_MANAGER_PIN':'ম্যানেজার পিন পরিবর্তন', 
+                'ADD_FIXED_BILL':'নতুন ফিক্সড বিল', 'COLLECT_BILL':'বর্ডারের জমা গ্রহণ', 'EDIT_DIRECTOR_BILL':'বিল (খরচ) এডিট', 'DELETE_DIRECTOR_BILL':'বিল ডিলিট', 'EDIT_DIRECTOR_PAYMENT':'জমা এডিট', 'DELETE_DIRECTOR_PAYMENT':'জমা ডিলিট',
+                'DIRECTOR_ADD_BOARDER':'বর্ডার যোগ (পরিচালক)', 'DIRECTOR_DELETE_BOARDER':'বর্ডার ডিলিট (পরিচালক)', 'DIRECTOR_EDIT_BOARDER':'বর্ডার ইনফো এডিট', 'CHANGE_DIRECTOR':'পরিচালক পরিবর্তন', 'CHANGE_MANAGER':'ম্যানেজার পরিবর্তন', 'SET_BREAKFAST_RATE':'সকালের মিল রেট সেট করুন'
+            };
+            document.getElementById('mTitle').innerText = t[a] || 'অ্যাকশন';
+        }
+
+        async function submitAction(e) {
+            let payload = { mess_id: currentMessId, action: currentAct };
+            if (['ADD_DEPOSIT','ADD_TRANSACTION','MANAGER_EDIT_MEAL','EDIT_BAZAAR','DELETE_BAZAAR','ADD_FINE','UPDATE_NOTICE','ASSIGN_BAZAAR','EDIT_DEPOSIT','CHANGE_MANAGER_PIN'].includes(currentAct)) {
+                payload.manager_pin = managerPin;
+            } else {
+                payload.director_pin = directorPin;
+            }
+            
+            // Manager Payload Logic
+            if(currentAct == 'ADD_DEPOSIT') { let s=document.getElementById('i_d_id'); payload.boarder_id = s.value; payload.name = s.options[s.selectedIndex].text; payload.date = document.getElementById('i_d_date').value; payload.amount = document.getElementById('i_d_amt').value; }
+            // [FIX-6] ADD_TRANSACTION — backend reads d.name (buyer name) for Transactions sheet column 3
+            if(currentAct == 'ADD_TRANSACTION') { 
+                let bs=document.getElementById('i_t_buyer'); 
+                payload.name = bs.options[bs.selectedIndex].text; // backend reads d.name
+                payload.buyer_id = bs.value; 
+                payload.date = document.getElementById('i_t_date').value; 
+                payload.item = document.getElementById('i_t_item').value; 
+                payload.cost = document.getElementById('i_t_cost').value; 
+            }
+            if(currentAct == 'MANAGER_EDIT_MEAL') { let s=document.getElementById('i_mem_id'); payload.boarder_id = s.value; payload.name = s.options[s.selectedIndex].text; payload.date = document.getElementById('i_mem_date').value; payload.type = document.getElementById('i_mem_type').value; payload.meal_count = document.getElementById('i_mem_count').value; }
+            if(currentAct == 'EDIT_BAZAAR') { payload.id = document.getElementById('i_eb_id').value; payload.item = document.getElementById('i_eb_item').value; payload.cost = document.getElementById('i_eb_cost').value; }
+            if(currentAct == 'DELETE_BAZAAR') { payload.id = document.getElementById('i_db_id').value; }
+            if(currentAct == 'EDIT_DEPOSIT') { payload.id = document.getElementById('i_ed_id').value; payload.amount = document.getElementById('i_ed_amt').value; }
+            if(currentAct == 'ADD_FINE') { let s=document.getElementById('i_f_id'); payload.boarder_id = s.value; payload.name = s.options[s.selectedIndex].text; payload.amount = document.getElementById('i_f_amt').value; payload.reason=document.getElementById('i_f_rsn').value; }
+            if(currentAct == 'UPDATE_NOTICE') { payload.notice = document.getElementById('i_un_text').value; }
+            if(currentAct == 'ASSIGN_BAZAAR') { let s=document.getElementById('i_ab_id'); payload.boarder_id = s.value; payload.name = s.options[s.selectedIndex].text; let df=document.getElementById('i_ab_date_from').value; let dt=document.getElementById('i_ab_date_to').value; payload.dates = df === dt ? df : df + ' থেকে ' + dt + ' পর্যন্ত'; }
+            if(currentAct == 'CHANGE_MANAGER_PIN') { payload.new_pin = document.getElementById('i_cmp_pin').value; }
+            
+            // Director Payload Logic
+            if(currentAct == 'DIRECTOR_ADD_BOARDER') { payload.name = document.getElementById('i_d_nb_name').value; payload.phone = document.getElementById('i_d_nb_phone').value; }
+            if(currentAct == 'DIRECTOR_DELETE_BOARDER') { payload.boarder_id = document.getElementById('i_d_dbdr_id').value; }
+            if(currentAct == 'DIRECTOR_EDIT_BOARDER') { payload.boarder_id = document.getElementById('i_d_eb_id').value; payload.name = document.getElementById('i_d_eb_name').value; payload.phone = document.getElementById('i_d_eb_phone').value; }
+            
+            if(currentAct == 'ADD_FIXED_BILL') { payload.item = document.getElementById('i_df_item').value; payload.amount = document.getElementById('i_df_amt').value; }
+            if(currentAct == 'COLLECT_BILL') { let s=document.getElementById('i_dc_id'); payload.boarder_id = s.value; payload.name = s.options[s.selectedIndex].text; payload.date = document.getElementById('i_dc_date').value; payload.amount = document.getElementById('i_dc_amt').value; }
+            if(currentAct == 'EDIT_DIRECTOR_BILL') { payload.id = document.getElementById('i_ede_id').value; payload.item = document.getElementById('i_ede_item').value; payload.amount = document.getElementById('i_ede_amt').value; }
+            if(currentAct == 'DELETE_DIRECTOR_BILL') { payload.id = document.getElementById('i_dde_id').value; }
+            if(currentAct == 'EDIT_DIRECTOR_PAYMENT') { payload.id = document.getElementById('i_edp_id').value; payload.amount = document.getElementById('i_edp_amt').value; }
+            if(currentAct == 'DELETE_DIRECTOR_PAYMENT') { payload.id = document.getElementById('i_ddp_id').value; }
+            
+            if(currentAct == 'CHANGE_MANAGER') { payload.new_name = document.getElementById('i_cm_name').value; payload.new_pin = document.getElementById('i_cm_pin').value; }
+            if(currentAct == 'CHANGE_DIRECTOR') { payload.new_pin = document.getElementById('i_cd_pin').value; }
+            // [FIX-5b] SET_BREAKFAST_RATE → backend action = SET_GLOBAL_BREAKFAST, field = value (0/0.5/1)
+            if(currentAct == 'SET_BREAKFAST_RATE') { 
+                payload.action = 'SET_GLOBAL_BREAKFAST'; // backend এর correct action name
+                payload.value = document.getElementById('i_br_rate').value; 
+            }
+
+            let btn = e ? e.currentTarget : null; 
+            let old = setBtnLoading(btn);
+            
+            try {
+                let res = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify(payload)});
+                showToast(await res.text()); 
+                closeM('modal'); 
+            } catch(err) { 
+                showToast("Error", true); 
+            } finally { 
+                resetBtn(btn, old); 
+                fetchFreshData(); 
+                
+                if(currentAct == 'CHANGE_MANAGER' && payload.new_pin) { 
+                    managerPin = payload.new_pin; 
+                    localStorage.setItem('mgr_pin', managerPin); 
+                }
+                if(currentAct == 'CHANGE_DIRECTOR' && payload.new_pin) { 
+                    directorPin = payload.new_pin; 
+                    localStorage.setItem('dir_pin', directorPin); 
+                }
+            }
+        }
+
+        async function mgrActionBazaar(id, actionStr, e) {
+            let btn = e ? e.currentTarget : null; 
+            let old = setBtnLoading(btn);
+            try { 
+                let res = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({mess_id: currentMessId, action: actionStr, manager_pin: managerPin, id: id})}); 
+                showToast(await res.text()); 
+            } catch(err) { 
+                showToast("Error", true); 
+            } finally { 
+                resetBtn(btn, old); 
+                fetchFreshData(); 
+            }
+        }
+
+        // BAZAAR SUBMIT
+        function openBazaarSubmit() {
+            if(!loggedBoarderId) { 
+                pendingLoginAction = 'SUBMIT_BAZAAR'; 
+                return showRoleLogin('boarder'); 
+            }
+            document.getElementById('bzrName').innerHTML = `<option value="${loggedBoarderId}" selected class="text-gray-900 bg-white font-bold">${loggedBoarderName}</option>`;
+            document.getElementById('bzrCost').value = ""; 
+            document.getElementById('bzrItems').value = "";
+            openM('bazaarModal'); 
+        }
+
+        async function submitPendingBazaar(e) {
+            let c = document.getElementById('bzrCost').value; 
+            let i = document.getElementById('bzrItems').value;
+            if(!c || !i) return showToast("সব তথ্য দিন!", true);
+            
+            let p = await askForPin(`আপনার পিন দিন:`); 
+            if(!p) return;
+            
+            let btn = e ? e.currentTarget : null; 
+            let old = setBtnLoading(btn);
+            
+            try {
+                let res = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({mess_id: currentMessId, action: "SUBMIT_BAZAAR", boarder_id: loggedBoarderId, name: loggedBoarderName, cost: c, item: i, boarder_pin: p})});
+                let txt = await res.text(); 
+                showToast(txt); 
+                if(txt.includes('Success')) closeM('bazaarModal');
+            } catch(err) { 
+                showToast("Error", true); 
+            } finally { 
+                resetBtn(btn, old); 
+                fetchFreshData(); 
+            }
+        }
+
+        // DAILY MEALS & PDF
+        function showDailyMeal() {
+            openM('mealM'); 
+            document.getElementById('mList').innerHTML = '<p class="text-center text-gray-500 py-4"><i class="fas fa-spinner fa-spin mr-2"></i> লোড হচ্ছে...</p>';
+            
+            let breakfastRate = Number(windowAppData?.settings?.[1]?.[5]) || 0;
+            // [FIX-11] globalBreakfast (settings[1][7]) দিয়ে column show/hide
+            let gbValMeal = parseFloat(windowAppData?.settings?.[1]?.[7]);
+            if(isNaN(gbValMeal)) gbValMeal = 1;
+            
+            // সকালের কলাম header hide/show
+            let bHeader = document.querySelector('#mealM .flex .flex-1:first-of-type');
+
+            let list = windowAppData.boarders.slice(1).map(r => {
+                let m = windowAppData.meals.slice(1).find(x => String(x[2]).trim() === String(r[0]).trim() && parseSheetDate(x[1])?.toDateString() === new Date().toDateString());
+                let bInput = gbValMeal > 0 ? `<input type="number" id="ml_b_${r[0]}" step="0.5" min="0" max="1" value="${m?m[4]:0}" class="w-10 p-1 rounded bg-gray-100 text-center text-xs outline-none text-gray-800" placeholder="সকাল">` : `<input type="hidden" id="ml_b_${r[0]}" value="0">`;
+                return `
+                    <div class="flex justify-between items-center glass p-2 rounded-xl mb-2">
+                        <span class="text-xs font-bold w-1/3">${escapeHTML(r[1])}</span>
+                        <div class="flex gap-2 w-2/3 justify-end">
+                            ${bInput}
+                            <input type="number" id="ml_l_${r[0]}" value="${m?m[5]:0}" class="w-10 p-1 rounded bg-gray-100 text-center text-xs outline-none text-gray-800" placeholder="দুপুর">
+                            <input type="number" id="ml_d_${r[0]}" value="${m?m[6]:0}" class="w-10 p-1 rounded bg-gray-100 text-center text-xs outline-none text-gray-800" placeholder="রাত">
+                        </div>
+                    </div>`;
+            }).join('');
+            
+            // [FIX-11b] সকাল header hide — globalBreakfast (0/0.5/1) দিয়ে
+            let bColHeader = document.getElementById('mealBreakfastHeader');
+            if(bColHeader) bColHeader.style.display = gbValMeal > 0 ? '' : 'none';
+            
+            document.getElementById('mList').innerHTML = list;
+        }
+
+        async function submitMeals(e) {
+            let list = windowAppData.boarders.slice(1).map(r => ({
+                boarder_id: r[0], 
+                name: r[1], 
+                breakfast: document.getElementById('ml_b_'+r[0]).value, 
+                lunch: document.getElementById('ml_l_'+r[0]).value, 
+                dinner: document.getElementById('ml_d_'+r[0]).value
+            }));
+            
+            let btn = e ? e.currentTarget : null; 
+            let old = setBtnLoading(btn);
+            
+            try { 
+                let res = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({mess_id: currentMessId, action: "ADD_DAILY_MEALS", manager_pin: managerPin, mealsList: list})}); 
+                showToast(await res.text()); 
+                closeM('mealM'); 
+            } catch(err) { 
+                showToast("Error", true); 
+            } finally { 
+                resetBtn(btn, old);
+                fetchFreshData(); 
+            }
+        }
+
+        function generateReport() {
+            let d = windowAppData; 
+            let breakfastRate = Number(d.settings[1][5]) || 0;
+            let te = d.transactions.slice(1).filter(r => isCurrentMonth(r[1])).reduce((s, r) => s + Number(r[4] || 0), 0);
+            // [FIX-9c] Report header: breakfast weight already 0/0.5/1
+            let tm = d.meals.slice(1).filter(r => isCurrentMonth(r[1])).reduce((s, r) => s + Number(r[4]||0) + Number(r[5]||0) + Number(r[6]||0), 0);
+            let rawMr = Number(tm > 0 ? (te / tm) : 0);
+
+            document.getElementById('reportMonth').innerText = "চলতি মাসের হিসাব — " + document.getElementById('monthName').innerText;
+            document.getElementById('rExp').innerText = "৳" + te.toFixed(0); 
+            document.getElementById('rRate').innerText = "৳" + rawMr.toFixed(2);
+            document.getElementById('rMgrName').innerText = document.getElementById('mgrName').innerText; 
+            document.getElementById('rMessTitle').innerText = currentMessName;
+
+            let rows = d.boarders.slice(1).map((b, idx) => {
+                let dep = d.deposits.slice(1).filter(x => String(x[2]).trim() === String(b[0]).trim() && isCurrentMonth(x[1])).reduce((s, r) => s + Number(r[4]), 0);
+                // [FIX-9b] Report: breakfast weight already stored as 0/0.5/1
+                let meals = d.meals.slice(1).filter(x => String(x[2]).trim() === String(b[0]).trim() && isCurrentMonth(x[1])).reduce((s, m) => s + Number(m[4]||0) + Number(m[5]||0) + Number(m[6]||0), 0);
+                
+                let cost = meals * rawMr; 
+                let bal = dep - cost; 
+                let bg = idx % 2 === 0 ? '#ffffff' : '#f8fafc'; 
+                let balColor = bal < 0 ? '#ef4444' : '#16a34a';
+                
+                return `
+                    <tr style="background:${bg};">
+                        <td style="padding:10px 12px;font-weight:700;font-size:12px;border-bottom:1px solid #f1f5f9;">${escapeHTML(b[1])}</td>
+                        <td style="padding:10px 8px;text-align:right;font-size:12px;border-bottom:1px solid #f1f5f9;color:#0284c7;">৳${dep}</td>
+                        <td style="padding:10px 8px;text-align:right;font-size:12px;border-bottom:1px solid #f1f5f9;">${meals}</td>
+                        <td style="padding:10px 8px;text-align:right;font-size:12px;border-bottom:1px solid #f1f5f9;color:#ea580c;">৳${cost.toFixed(0)}</td>
+                        <td style="padding:10px 8px;text-align:right;font-weight:800;font-size:13px;border-bottom:1px solid #f1f5f9;color:${balColor};">${bal < 0 ? '- ' : '+ '}৳${Math.abs(bal).toFixed(0)}</td>
+                    </tr>`;
+            }).join('');
+            
+            document.getElementById('reportTable').innerHTML = rows; 
+            openM('reportM');
+        }
+
+        async function getAIAdvice() {
+            const btn = document.getElementById('aiBtnText'); 
+            btn.innerText = "এআই ভাবছে...";
+            try {
+                let todayStr = new Date().toDateString();
+                let todaysBazaarItems = windowAppData.transactions.slice(1).filter(r => { 
+                    let d = parseSheetDate(r[1]); 
+                    return d && d.toDateString() === todayStr; 
+                }).map(r => r[3]).join(", ");
+                
+                if (!todaysBazaarItems) todaysBazaarItems = "আজ কোনো বাজার আসেনি";
+                
+                let activeMealsCount = document.getElementById('todayLunch').innerText + " টি লাঞ্চ এবং " + document.getElementById('todayDinner').innerText + " টি ডিনার";
+                
+                let payload = { 
+                    mess_id: currentMessId, 
+                    action: "GET_AI_ADVICE", 
+                    totalDeposit: document.getElementById('totalDep').innerText, 
+                    totalExpense: document.getElementById('totalExp').innerText, 
+                    mealRate: document.getElementById('mRate').innerText, 
+                    totalMeals: activeMealsCount, 
+                    todaysBazaar: todaysBazaarItems 
+                };
+                
+                const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) }); 
+                const text = await res.text();
+                
+                const aiBox = document.getElementById('aiBox'); 
+                aiBox.classList.remove('hidden'); 
+                aiBox.innerText = text;
+            } catch(e) { 
+                showToast("AI Error!", true); 
+            } finally { 
+                btn.innerText = "ম্যাজিক এআই সাজেশন"; 
+            }
+        }
+
+        function initChart() {
+            if(!windowAppData) return; 
+            let canvas = document.getElementById('expenseChart'); 
+            const ctx = canvas.getContext('2d'); 
+            if(myChart) { myChart.destroy(); myChart = null; }
+            
+            let datesKey = [], amounts = [], displayDates = [];
+            windowAppData.transactions.slice(1).filter(r => isCurrentMonth(r[1])).forEach(r => { 
+                let dDate = parseSheetDate(r[1]); 
+                if(dDate) { 
+                    let key = dDate.toISOString().split('T')[0]; 
+                    let idx = datesKey.indexOf(key); 
+                    if(idx > -1) { 
+                        amounts[idx] += Number(r[4] || 0); 
+                    } else { 
+                        datesKey.push(key); 
+                        amounts.push(Number(r[4] || 0)); 
+                        displayDates.push(dDate.toLocaleDateString('bn-BD', {day: 'numeric'})); 
+                    } 
+                } 
+            });
+            
+            let combined = datesKey.map((key, i) => ({key, amount: amounts[i], display: displayDates[i]})); 
+            combined.sort((a, b) => a.key.localeCompare(b.key));
+            
+            let sortedDisplay = combined.map(c => c.display).slice(-7); 
+            let sortedAmounts = combined.map(c => c.amount).slice(-7);
+            
+            Chart.defaults.color = document.documentElement.classList.contains('dark') ? '#9ca3af' : '#4b5563';
+            myChart = new Chart(ctx, { 
+                type: 'bar', 
+                data: { 
+                    labels: sortedDisplay, 
+                    datasets: [{label: 'দৈনিক খরচ (৳)', data: sortedAmounts, backgroundColor: '#4f46e5', borderRadius: 6}] 
+                }, 
+                options: {responsive: true, plugins: {legend: {display: false}}, scales: {x: {grid: {display: false}}}} 
+            });
+        }
+
+        function openDirectorPublicModal() {
+            document.getElementById('directorPublicModal').classList.remove('hidden'); 
+            document.getElementById('directorPublicModal').classList.add('flex');
+            setTimeout(() => document.getElementById('dirPubContent').classList.remove('translate-y-full'), 10);
+        }
+        
+        function closeDirectorPublicModal() {
+            document.getElementById('dirPubContent').classList.add('translate-y-full');
+            setTimeout(() => { 
+                document.getElementById('directorPublicModal').classList.add('hidden'); 
+                document.getElementById('directorPublicModal').classList.remove('flex'); 
+            }, 300);
+        }
+    </script>
+</body>
+</html>
